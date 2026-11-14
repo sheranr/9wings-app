@@ -122,7 +122,8 @@ export async function rescheduleNotifications(data) {
     if (!(await ensureNotificationPermission())) return 0;
     try { await LN.createChannel({ id: 'alerts', name: 'Event alerts', importance: 4, visibility: 1 }); } catch (e) { /* older Android */ }
     const pending = await LN.getPending();
-    if (pending.notifications?.length) await LN.cancel({ notifications: pending.notifications.map(n => ({ id: n.id })) });
+    const mine = (pending.notifications || []).filter(n => n.id < 2000000001); // leave update/message notifications alone
+    if (mine.length) await LN.cancel({ notifications: mine.map(n => ({ id: n.id })) });
     const list = plannedNotifications(data);
     if (list.length) await LN.schedule({
       notifications: list.map(n => ({ id: n.id, title: n.title, body: n.body, schedule: { at: n.when, allowWhileIdle: true }, channelId: 'alerts', extra: n.extra }))

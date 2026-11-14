@@ -2,6 +2,7 @@
 
 Customers, bookings, quotations and invoices (PDF), a built-in calendar, and anniversary / birthday offer alerts for 9Wings Event.
 
+- **App Manager (messages & updates):** https://sheranr.github.io/9wings-app/admin/
 - **Download page:** https://sheranr.github.io/9wings-app/download/
 - **Android app:** download the latest `9Wings-Event.apk` from Releases.
 - **Web app:** https://sheranr.github.io/9wings-app/

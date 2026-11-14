@@ -100,3 +100,24 @@ Install the app → **More → Backup to Google Sheet** → enter the link and k
 ## Changing business details
 
 **More → Settings**: business name, phone numbers, terms, bank details, alert days, payment due days, default discount and the WhatsApp messages. Changes show on new PDFs straight away.
+
+---
+
+## Updates and messages (for the app developer)
+
+**Download page:** https://sheranr.github.io/9wings-app/download/ — always offers the newest Android version.
+
+**App Manager:** https://sheranr.github.io/9wings-app/admin/
+
+1. Create a GitHub access key: GitHub → Settings → Developer settings → Fine-grained tokens → Generate new token. Repository access: only **9wings-app**. Permissions: **Contents: Read and write**, **Actions: Read and write**.
+2. Open the App Manager, paste the key and tap **Connect**.
+
+From there you can:
+- **Send a message** — users get a phone notification and a pop-up the next time they open the app (usually within 5 minutes). Choose everyone, Android only or web only, add a button link, and set an end date.
+- **Turn messages off or delete them.**
+- **Publish an update** — builds a new Android version (about 3 minutes) with your "What's new" notes. Users see an **Update** banner, a pop-up and a phone notification; tapping **Update now** downloads the new version to install over the old one.
+- **Require a version** — anyone on an older version gets an update screen they can't close.
+
+New code pushed to GitHub also builds and publishes a new version automatically, using the commit message as "What's new".
+
+How users get it: the app checks for updates and messages when it opens, when it comes back on screen, and every 6 hours while open. The web app always loads the newest version by itself.

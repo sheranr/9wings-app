@@ -3,6 +3,7 @@ import * as L from './logic.js';
 import { buildInvoicePdf, pdfFileName } from './pdf.js';
 import * as N from './native.js';
 import * as Sync from './sync.js';
+import * as U from './updates.js';
 
 const { esc, money, fmtDate, fmtNice, todayISO } = L;
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -83,6 +84,7 @@ const routes = [
   [/^#\/invoice\/new(?:\/([^/]+))?$/, evId => invoiceForm(null, evId)],
   [/^#\/invoice\/([^/]+)$/, id => invoiceForm(id)],
   [/^#\/more$/, moreView],
+  [/^#\/updates$/, updatesView],
   [/^#\/settings$/, settingsView],
   [/^#\/items$/, itemsView],
   [/^#\/sync$/, syncView],
@@ -102,6 +104,8 @@ async function route() {
       window.scrollTo(0, 0);
       await fn(...m.slice(1).map(x => x && decodeURIComponent(x)));
       $$('[data-back]').forEach(b => b.onclick = () => history.length > 1 ? history.back() : go('#/home'));
+      refreshBadges();
+      if (U.state.forced && U.state.latest) updatesUI.showUpdate(U.state.latest, true); // required update can't be skipped
       return;
     }
   }
@@ -122,6 +126,7 @@ async function homeView() {
 
   view().innerHTML = `
   ${header(L.titleCase(S.settings.businessName), { action: `<button class="icon-btn" onclick="location.hash='#/sync'" aria-label="Sync">${syncBadge()}</button>` })}
+  ${updateBanner()}
   <section class="hero">
     <p class="hello">${greet()}</p>
     <p class="today">${fmtNice(t)}</p>
@@ -148,6 +153,7 @@ async function homeView() {
   </section>
   <a class="fab" href="#/event/new" aria-label="New booking">${ICON.plus}</a>`;
 
+  bindUpdateBanner();
   $$('[data-offer]').forEach(b => b.onclick = () => offerModal(b.dataset.offer));
   $$('[data-unsent]').forEach(b => b.onclick = async () => { await db.remove('offers', b.dataset.unsent); route(); });
 }
@@ -607,6 +613,7 @@ function paymentModal(onAdd) {
 async function moreView() {
   view().innerHTML = `${header('More')}
   <section class="block menu">
+    <a class="card row" href="#/updates"><div class="grow"><b>Updates &amp; messages ${U.state.unread || U.state.updateAvailable ? `<span class="badge-dot">${U.state.unread + (U.state.updateAvailable ? 1 : 0)}</span>` : ''}</b><span class="muted small">${U.state.updateAvailable ? 'New version ' + esc(U.state.latest?.version || '') + ' available' : 'App version, news from 9Wings'}</span></div>›</a>
     <a class="card row" href="#/sync"><div class="grow"><b>Backup to Google Sheet</b><span class="muted small">${S.settings.lastSync ? 'Last synced ' + new Date(S.settings.lastSync).toLocaleString() : 'Not set up yet'}</span></div>›</a>
     <a class="card row" href="#/reports"><div class="grow"><b>Reports</b><span class="muted small">Income, balances, offers</span></div>›</a>
     <a class="card row" href="#/events"><div class="grow"><b>All bookings</b><span class="muted small">Search past & upcoming</span></div>›</a>
@@ -618,7 +625,7 @@ async function moreView() {
     <div class="row-btns"><button class="btn ghost" id="exp">Save backup file</button><label class="btn ghost">Restore file<input type="file" id="imp" accept=".json,application/json" hidden></label></div>
   </section>
   ${!N.isNative() && 'Notification' in window && Notification.permission !== 'granted' ? `<section class="block"><button class="btn ghost full" id="perm">Allow notifications in this browser</button><p class="muted small">In the web version, alerts show when you open the app. The Android app alerts you even when closed.</p></section>` : ''}
-  <p class="muted small center">9Wings Event app · v1.0</p>`;
+  <p class="muted small center">9Wings Event app · ${U.state.current ? 'v' + esc(U.state.current) : 'web version'}</p>`;
   $('#exp').onclick = async () => {
     const data = await db.exportAll();
     const bytes = new TextEncoder().encode(JSON.stringify(data, null, 1));
@@ -736,6 +743,82 @@ async function reportsView() {
   <section class="block"><h2>Balances to collect</h2>${outstanding.map(x => invoiceRow(x.i)).join('') || '<p class="muted small">Everything is paid. 🎉</p>'}</section>`;
 }
 
+// ---------- Updates & messages ----------
+function updateBanner() {
+  const s = U.state;
+  if (!s.updateAvailable || !s.latest) return '';
+  return `<div class="upd-banner ${s.forced ? 'forced' : ''}"><div class="grow"><b>Update available · ${esc(s.latest.version)}</b><span class="small">${s.forced ? 'This update is required.' : 'Get the newest version of the app.'}</span></div><button class="btn" data-update>Update</button></div>`;
+}
+function bindUpdateBanner() { $$('[data-update]').forEach(b => b.onclick = () => U.startDownload(U.state.latest?.url)); }
+function refreshBadges() {
+  const n = (U.state.unread || 0) + (U.state.updateAvailable ? 1 : 0);
+  const more = $('.tabbar a[data-tab="more"]');
+  if (more) { let d = $('.tab-badge', more); if (!d) { d = document.createElement('i'); d.className = 'tab-badge'; more.appendChild(d); } d.textContent = n; d.style.display = n ? '' : 'none'; }
+}
+const NOTICE_ICON = { update: '⬆️', warning: '⚠️', offer: '🎁', info: '📣' };
+function noticeHtml(n, full = true) {
+  return `<div class="notice t-${esc(n.type || 'info')}"><div class="n-ic">${NOTICE_ICON[n.type] || NOTICE_ICON.info}</div><div class="grow"><b>${esc(n.title || 'Message')}</b><span class="muted small">${n.created ? fmtNice(n.created.slice(0, 10)) : ''}</span>${full ? `<p class="n-msg">${esc(n.message || '').replace(/\n/g, '<br>')}</p>${n.link ? `<button class="btn ghost" data-link="${esc(n.link)}">${esc(n.linkLabel || 'Open')}</button>` : ''}` : ''}</div></div>`;
+}
+function bindLinks(root) { $$('[data-link]', root).forEach(b => b.onclick = () => N.openExternal(b.dataset.link)); }
+
+const updatesUI = {
+  showUpdate(info, forced) {
+    if ($('#modal').classList.contains('open') && !forced) return;
+    modal(`<div class="upd-head"><img src="img/icon-192.png" alt=""><div><h3>${forced ? 'Please update the app' : 'New version available'}</h3><p class="muted small">Version ${esc(info.version)}${U.state.current ? ' · you have ' + esc(U.state.current) : ''}</p></div></div>
+      ${info.notes && !/^Download/i.test(info.notes) ? `<div class="upd-notes"><b>What's new</b><p>${esc(info.notes).replace(/\n/g, '<br>')}</p></div>` : ''}
+      <p class="muted small">Your customers, bookings and invoices stay on the phone when you update.</p>
+      <div class="row-btns">${forced ? '' : '<button class="btn ghost" data-later>Later</button>'}<button class="btn" data-go>Update now</button></div>
+      <p class="muted small">After the download finishes, tap the file and choose <b>Install</b>.</p>`, sh => {
+      $('[data-go]', sh).onclick = () => U.startDownload(info.url);
+      const later = $('[data-later]', sh);
+      if (later) later.onclick = () => {
+        U.dismissUpdate(info.version); closeModal();
+        const next = U.state.pending.find(n => !U.seenIds().includes(n.id));
+        if (next) updatesUI.showNotice(next);
+      };
+      if (forced) $('#modal').onclick = null;
+    });
+  },
+  showNotice(n) {
+    if ($('#modal').classList.contains('open')) return;
+    modal(`${noticeHtml(n)}<div class="row-btns"><button class="btn" data-ok>OK</button></div>`, sh => {
+      bindLinks(sh);
+      $('[data-ok]', sh).onclick = () => {
+        U.markSeen(n.id); U.state.unread = Math.max(0, U.state.unread - 1); closeModal(); refreshBadges();
+        const next = U.state.pending.find(x => !U.seenIds().includes(x.id));
+        if (next) setTimeout(() => updatesUI.showNotice(next), 250);
+      };
+    });
+  },
+  onState() {
+    refreshBadges();
+    const h = location.hash;
+    if (h === '#/updates') updatesView();
+    else if (h === '#/home' && !$('.upd-banner') && U.state.updateAvailable) { const hero = $('.hero'); if (hero) { hero.insertAdjacentHTML('beforebegin', updateBanner()); bindUpdateBanner(); } }
+  }
+};
+
+async function updatesView() {
+  const s = U.state;
+  view().innerHTML = `${header('Updates & messages', { back: true })}
+  <section class="block">
+    <div class="card">
+      <div class="upd-head"><img src="img/icon-192.png" alt=""><div><b>9Wings Event</b><span class="muted small">${s.current ? 'Installed version ' + esc(s.current) : 'Web version — updates itself automatically'}</span></div></div>
+      ${s.updateAvailable && s.latest ? `<div class="upd-banner inline"><div class="grow"><b>Version ${esc(s.latest.version)} is available</b>${s.latest.notes && !/^Download/i.test(s.latest.notes) ? `<span class="small">${esc(s.latest.notes).replace(/\n/g, '<br>')}</span>` : ''}</div></div><button class="btn full" data-update>Update now</button><p class="muted small">After the download finishes, tap the file and choose <b>Install</b>. Your data stays.</p>`
+        : `<p class="small pos">${s.current ? '✓ You have the latest version.' : '✓ Always up to date.'}</p>`}
+      <button class="btn ghost full" id="recheck">Check again</button>
+      ${s.error ? `<p class="muted small">Couldn't check right now (no internet?).</p>` : ''}
+    </div>
+  </section>
+  <section class="block"><h2>Messages</h2>
+    ${s.notices.length ? s.notices.map(n => `<div class="card">${noticeHtml(n)}</div>`).join('') : '<p class="muted small">No messages right now.</p>'}
+  </section>`;
+  $$('[data-back]').forEach(b => b.onclick = () => history.length > 1 ? history.back() : go('#/home'));
+  bindUpdateBanner(); bindLinks(view());
+  s.notices.forEach(n => U.markSeen(n.id)); s.unread = 0; refreshBadges();
+  $('#recheck').onclick = async e => { e.target.disabled = true; e.target.textContent = 'Checking…'; await U.check(updatesUI, { force: true }); toast(U.state.updateAvailable ? 'Update available' : 'You are up to date'); };
+}
+
 // ---------- Startup ----------
 async function afterDataChange() {
   const d = await load();
@@ -751,6 +834,7 @@ async function start() {
   if (!location.hash) history.replaceState(null, '', '#/home');
   await route();
   afterDataChange();
+  U.watch(updatesUI);
   if ('serviceWorker' in navigator && !N.isNative() && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   // Ask the browser not to clear our data
   navigator.storage?.persist?.().catch(() => {});

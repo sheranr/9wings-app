@@ -2,12 +2,13 @@
   "name": "ninewings-event",
   "version": "1.0.0",
   "private": true,
-  "description": "9Wings Event — customers, bookings, invoices and anniversary offers",
+  "description": "9Wings Event \u2014 customers, bookings, invoices and anniversary offers",
   "scripts": {
     "serve": "npx http-server www -p 8080"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
     "@capacitor/app-launcher": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/filesystem": "^7.0.0",

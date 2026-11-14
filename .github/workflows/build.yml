@@ -4,7 +4,18 @@ name: Build 9Wings app
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'notices/**'
   workflow_dispatch:
+    inputs:
+      notes:
+        description: "What's new in this version (shown to users)"
+        required: false
+        default: ''
+      required:
+        description: 'Make this version required (users must update)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -60,12 +71,38 @@ jobs:
           $BT/apksigner verify 9Wings-Event.apk
           rm release.jks
 
+      - name: Release notes
+        env:
+          NOTES: ${{ github.event.inputs.notes }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          if [ -n "$NOTES" ]; then printf '%s\n' "$NOTES" > notes.md
+          else printf '%s\n' "$COMMIT_MSG" | grep -viE '^(co-authored-by|claude-session):' | sed '/^$/N;/^\n$/D' > notes.md; fi
+          [ -s notes.md ] || echo "Improvements and fixes." > notes.md
+          cat notes.md
+
       - name: Publish download
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: 9Wings Event 1.0.${{ github.run_number }}
-          body: Download **9Wings-Event.apk** below on your Android phone and open it to install or update.
+          body_path: notes.md
+          make_latest: true
+
+      - name: Make this version required
+        if: ${{ github.event.inputs.required == 'true' }}
+        run: |
+          V="1.0.${{ github.run_number }}"
+          git config user.name "9Wings build"; git config user.email "actions@users.noreply.github.com"
+          for i in 1 2 3; do
+            git pull -q --rebase origin main
+            mkdir -p notices; [ -f notices/notices.json ] || echo '{"minVersion":"","notices":[]}' > notices/notices.json
+            jq --arg v "$V" --arg t "$(date -u +%FT%TZ)" '.minVersion=$v | .updatedAt=$t' notices/notices.json > n.tmp && mv n.tmp notices/notices.json
+            git add notices/notices.json
+            git commit -qm "Require version $V" || break
+            git push -q origin HEAD:main && break
+            sleep 5
+          done
           files: 9Wings-Event.apk
 
   web:

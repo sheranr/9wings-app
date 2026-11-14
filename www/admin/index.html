@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#171512">
+<title>9Wings App Manager</title>
+<link rel="icon" href="../img/icon-192.png">
+<style>
+  :root {
+    --gold: #B8892F; --gold-2: #D9B25F; --gold-soft: #F6EEDC;
+    --ink: #171512; --muted: #7A746A; --line: #ECE6DA; --bg: #FBF8F2; --card: #fff;
+    --neg: #B4442E; --pos: #2F7D4F;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); }
+  a { color: var(--gold); }
+  .top { background: var(--ink); color: #fff; }
+  .top .in { max-width: 1100px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  .top img { width: 36px; height: 36px; border-radius: 9px; background: #fff; }
+  .top h1 { font: 600 18px var(--serif); margin: 0; flex: 1; }
+  .top h1 span { color: var(--gold-2); }
+  .top button { background: none; border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 10px; padding: 7px 12px; font: 600 13px var(--sans); cursor: pointer; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+  h2 { font: 600 20px var(--serif); margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; align-items: start; }
+  .stack { display: grid; gap: 18px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .stat span { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .8px; }
+  .stat b { font: 600 22px var(--serif); }
+  .stat span.pill { display: inline-block; font-size: 12px; letter-spacing: .5px; margin-top: 6px; }
+  .stat small { display: block; color: var(--muted); font-size: 12px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 12px 0 5px; }
+  input, select, textarea { width: 100%; font: 15px var(--sans); color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold-2); box-shadow: 0 0 0 3px rgba(217,178,95,.2); }
+  textarea { resize: vertical; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 18px; border-radius: 11px; border: 1px solid transparent; background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: #fff; font: 600 14px var(--sans); cursor: pointer; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.ghost { background: #fff; color: var(--ink); border-color: var(--line); }
+  .btn.dark { background: var(--ink); }
+  .btn.danger { background: #fff; color: var(--neg); border-color: #F0D8D2; }
+  .btn.sm { min-height: 32px; padding: 0 10px; font-size: 13px; border-radius: 9px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: #EEF0F4; color: #4D5566; text-transform: uppercase; letter-spacing: .5px; }
+  .pill.ok { background: #E5F2EA; color: var(--pos); }
+  .pill.bad { background: #F6E3DF; color: var(--neg); }
+  .pill.run { background: var(--gold-soft); color: #8A6620; }
+  .list { display: grid; gap: 10px; }
+  .item { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: #fff; }
+  .item.off { opacity: .55; }
+  .item-head { display: flex; gap: 10px; align-items: flex-start; }
+  .item-head .grow { flex: 1; min-width: 0; }
+  .item-head b { display: block; }
+  .item p { margin: 6px 0 0; font-size: 14px; white-space: pre-line; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row > span, .row > .pill { white-space: nowrap; }
+  .preview { margin-top: 14px; background: var(--bg); border: 1px dashed #DCCFB4; border-radius: 14px; padding: 14px; }
+  .preview .phone-card { background: #fff; border-radius: 14px; padding: 14px; display: flex; gap: 12px; box-shadow: 0 2px 10px rgba(60,40,0,.06); }
+  .n-ic { width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--gold-soft); display: flex; align-items: center; justify-content: center; font-size: 19px; }
+  .login { max-width: 560px; margin: 30px auto; }
+  .login ol { padding-left: 20px; margin: 10px 0; font-size: 14px; }
+  .login li { margin: 4px 0; }
+  .check { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 14px; }
+  .check input { width: 18px; height: 18px; accent-color: var(--gold); }
+  .warn { background: #FFF6E6; border: 1px solid #F1DDB0; border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-top: 12px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 12px; font-size: 14px; opacity: 0; pointer-events: none; transition: .25s; z-index: 30; max-width: 90vw; text-align: center; }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .hidden { display: none !important; }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .two { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <img src="../img/logo.jpg" alt="">
+  <h1>9Wings <span>App Manager</span></h1>
+  <button id="logout" class="hidden">Disconnect</button>
+</div></header>
+
+<main>
+  <!-- Connect -->
+  <section id="loginView" class="login hidden">
+    <div class="card">
+      <h2>Connect to GitHub</h2>
+      <p class="sub">This page sends messages and updates to everyone using the 9Wings app. It needs a GitHub access key for the <b>sheranr/9wings-app</b> repository.</p>
+      <ol>
+        <li>On GitHub, open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Settings → Developer settings → Fine-grained tokens → Generate new token</a>.</li>
+        <li>Name: <b>9Wings manager</b>. Expiration: 1 year.</li>
+        <li>Repository access: <b>Only select repositories</b> → <b>9wings-app</b>.</li>
+        <li>Permissions → Repository: <b>Contents: Read and write</b> and <b>Actions: Read and write</b>.</li>
+        <li>Click <b>Generate token</b> and paste it below.</li>
+      </ol>
+      <label for="token">Access key (token)</label>
+      <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+      <label class="check"><input type="checkbox" id="remember" checked> Remember on this device</label>
+      <div class="actions"><button class="btn" id="connect">Connect</button></div>
+      <p class="warn">Keep this key private. Anyone with it can change the app's messages and start new builds. Only use "Remember" on your own computer or phone.</p>
+    </div>
+  </section>
+
+  <!-- Dashboard -->
+  <section id="appView" class="hidden">
+    <div class="stats">
+      <div class="stat"><span>Latest version</span><b id="stVersion">—</b><small id="stDate"></small></div>
+      <div class="stat"><span>Downloads</span><b id="stDownloads">—</b><small>all versions</small></div>
+      <div class="stat"><span>Required version</span><b id="stMin">None</b><small>older apps must update</small></div>
+      <div class="stat"><span>Last build</span><b id="stBuild">—</b><small id="stBuildWhen"></small></div>
+    </div>
+
+    <div class="grid">
+      <div class="stack">
+        <!-- Send message -->
+        <div class="card">
+          <h2>Send a message</h2>
+          <p class="sub">Shows as a phone notification and a pop-up the next time the app is opened (usually within 5 minutes).</p>
+          <div class="two">
+            <div><label for="mType">Type</label>
+              <select id="mType"><option value="info">📣 News / information</option><option value="update">⬆️ Update</option><option value="offer">🎁 Offer / tip</option><option value="warning">⚠️ Important</option></select></div>
+            <div><label for="mTarget">Send to</label>
+              <select id="mTarget"><option value="all">Everyone</option><option value="android">Android app only</option><option value="web">Web app only</option></select></div>
+          </div>
+          <label for="mTitle">Title</label>
+          <input id="mTitle" maxlength="80" placeholder="e.g. New feature: birthday reminders">
+          <label for="mMsg">Message</label>
+          <textarea id="mMsg" rows="4" maxlength="600" placeholder="Write the message users will see…"></textarea>
+          <div class="two">
+            <div><label for="mLink">Button link (optional)</label><input id="mLink" type="url" placeholder="https://…"></div>
+            <div><label for="mLinkLabel">Button text</label><input id="mLinkLabel" maxlength="30" placeholder="Open"></div>
+          </div>
+          <div class="two">
+            <div><label for="mExpires">Hide after (optional)</label><input id="mExpires" type="date"></div>
+            <div><label for="mMax">Only for versions up to (optional)</label><input id="mMax" placeholder="e.g. 1.0.3"></div>
+          </div>
+          <div class="preview"><div class="small muted" style="margin-bottom:8px">Preview</div><div class="phone-card" id="preview"></div></div>
+          <div class="actions"><button class="btn" id="send">Send message</button><button class="btn ghost" id="sendUpdateTpl">Use "update available" text</button></div>
+        </div>
+
+        <!-- Messages -->
+        <div class="card">
+          <h2>Messages</h2>
+          <p class="sub">Turn a message off to hide it from the app, or delete it.</p>
+          <div class="list" id="noticeList"><p class="muted small">Loading…</p></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <!-- Publish update -->
+        <div class="card">
+          <h2>Publish an update</h2>
+          <p class="sub">Builds a new Android version from the latest code. Users get an <b>Update</b> notification and button when it's ready (about 3 minutes).</p>
+          <label for="notes">What's new (users see this)</label>
+          <textarea id="notes" rows="4" placeholder="• Faster invoices&#10;• Fixed calendar on small phones"></textarea>
+          <label class="check"><input type="checkbox" id="makeRequired"> Make this update required (users can't skip it)</label>
+          <div class="actions"><button class="btn dark" id="build">Build &amp; publish update</button></div>
+          <p class="small muted" id="buildMsg"></p>
+        </div>
+
+        <!-- Required version -->
+        <div class="card">
+          <h2>Required version</h2>
+          <p class="sub">Anyone on an older version sees an update screen they can't close until they update.</p>
+          <div class="two">
+            <div><label for="minSel">Minimum version</label><select id="minSel"><option value="">None (no forced update)</option></select></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn ghost" id="saveMin" style="width:100%">Save</button></div>
+          </div>
+        </div>
+
+        <!-- Builds -->
+        <div class="card">
+          <h2>Recent builds</h2>
+          <div id="runs"><p class="muted small">Loading…</p></div>
+          <div class="actions"><button class="btn ghost sm" id="refresh">Refresh</button><a class="btn ghost sm" href="https://github.com/sheranr/9wings-app/actions" target="_blank" rel="noopener">Open on GitHub</a></div>
+        </div>
+
+        <!-- Releases -->
+        <div class="card">
+          <h2>Versions</h2>
+          <div id="releases"><p class="muted small">Loading…</p></div>
+          <div class="actions"><a class="btn ghost sm" href="../download/" target="_blank" rel="noopener">Download page</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+(function () {
+  var OWNER = 'sheranr', REPO = '9wings-app', PATH = 'notices/notices.json', WORKFLOW = 'build.yml';
+  var API = 'https://api.github.com/repos/' + OWNER + '/' + REPO;
+  var token = '';
+  var notices = { minVersion: '', updatedAt: '', notices: [] }, sha = null, releases = [];
+
+  var $ = function (s) { return document.querySelector(s); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function toast(m, ms) { var t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(function () { t.classList.remove('show'); }, ms || 2800); }
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+  function when(s) { if (!s) return ''; var d = new Date(s), diff = (Date.now() - d) / 60000; if (diff < 1) return 'just now'; if (diff < 60) return Math.round(diff) + ' min ago'; if (diff < 1440) return Math.round(diff / 60) + ' h ago'; return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); }
+  function b64encode(str) { var bytes = new TextEncoder().encode(str), bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return btoa(bin); }
+  function b64decode(b64) { var bin = atob(b64.replace(/\s/g, '')), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i); return new TextDecoder().decode(bytes); }
+  function cmp(a, b) { a = String(a || '0').replace(/^v/, '').split('.'); b = String(b || '0').replace(/^v/, '').split('.'); for (var i = 0; i < Math.max(a.length, b.length); i++) { var d = (parseInt(a[i], 10) || 0) - (parseInt(b[i], 10) || 0); if (d) return d > 0 ? 1 : -1; } return 0; }
+
+  function gh(path, opts) {
+    opts = opts || {};
+    return fetch(path.indexOf('http') === 0 ? path : API + path, {
+      method: opts.method || 'GET',
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      cache: 'no-store'
+    }).then(function (r) {
+      if (r.status === 204) return null;
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.message || ('Error ' + r.status)); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+  function friendly(e) {
+    if (e.status === 401) return 'The access key is wrong or has expired. Disconnect and connect again.';
+    if (e.status === 403 || e.status === 404) return 'The access key is missing a permission (needs Contents and Actions: Read and write for 9wings-app).';
+    if (e.status === 409) return 'Someone else just saved. Please try again.';
+    return e.message;
+  }
+
+  // ---------- Connect ----------
+  function showLogin() { $('#loginView').classList.remove('hidden'); $('#appView').classList.add('hidden'); $('#logout').classList.add('hidden'); }
+  function showApp() { $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden'); $('#logout').classList.remove('hidden'); }
+  $('#connect').onclick = function () {
+    token = $('#token').value.trim();
+    if (!token) return toast('Paste the access key first');
+    var b = this; b.disabled = true; b.textContent = 'Connecting…';
+    gh('').then(function (repo) {
+      if (!repo.permissions || !repo.permissions.push) throw Object.assign(new Error('no write'), { status: 403 });
+      if ($('#remember').checked) store('nw-admin-token', token); else store('nw-admin-token', null);
+      showApp(); loadAll();
+    }).catch(function (e) { toast(friendly(e), 5000); }).then(function () { b.disabled = false; b.textContent = 'Connect'; });
+  };
+  $('#logout').onclick = function () { store('nw-admin-token', null); token = ''; $('#token').value = ''; showLogin(); };
+
+  // ---------- Load ----------
+  function loadAll() { loadNotices(); loadReleases(); loadRuns(); }
+
+  function loadNotices() {
+    return gh('/contents/' + PATH + '?ref=main').then(function (f) {
+      sha = f.sha;
+      try { notices = JSON.parse(b64decode(f.content)); } catch (e) { notices = { minVersion: '', notices: [] }; }
+      notices.notices = notices.notices || [];
+    }).catch(function (e) {
+      if (e.status === 404) { sha = null; notices = { minVersion: '', notices: [] }; } else toast(friendly(e), 5000);
+    }).then(renderNotices);
+  }
+
+  function saveNotices(msg) {
+    notices.updatedAt = new Date().toISOString();
+    var body = { message: msg, content: b64encode(JSON.stringify(notices, null, 2) + '\n'), branch: 'main' };
+    if (sha) body.sha = sha;
+    return gh('/contents/' + PATH, { method: 'PUT', body: body }).then(function (r) { sha = r.content.sha; renderNotices(); });
+  }
+
+  var ICON = { info: '📣', update: '⬆️', offer: '🎁', warning: '⚠️' };
+  function renderNotices() {
+    $('#stMin').textContent = notices.minVersion || 'None';
+    var sel = $('#minSel');
+    if (notices.minVersion && !Array.prototype.some.call(sel.options, function (o) { return o.value === notices.minVersion; })) sel.insertAdjacentHTML('beforeend', '<option>' + esc(notices.minVersion) + '</option>');
+    sel.value = notices.minVersion || '';
+    var list = notices.notices.slice().sort(function (a, b) { return (b.created || '').localeCompare(a.created || ''); });
+    var today = new Date().toISOString().slice(0, 10);
+    $('#noticeList').innerHTML = list.length ? list.map(function (n) {
+      var expired = n.expires && n.expires < today;
+      var live = n.active !== false && !expired;
+      return '<div class="item ' + (live ? '' : 'off') + '"><div class="item-head"><div class="n-ic">' + (ICON[n.type] || ICON.info) + '</div><div class="grow"><b>' + esc(n.title) + '</b>' +
+        '<span class="small muted">' + when(n.created) + ' · ' + ({ all: 'Everyone', android: 'Android', web: 'Web' }[n.target || 'all']) +
+        (n.expires ? ' · until ' + esc(n.expires) : '') + (n.maxVersion ? ' · up to v' + esc(n.maxVersion) : '') + '</span> ' +
+        '<span class="pill ' + (live ? 'ok' : '') + '">' + (expired ? 'Expired' : live ? 'Live' : 'Off') + '</span></div></div>' +
+        '<p>' + esc(n.message) + '</p>' + (n.link ? '<p class="small"><a href="' + esc(n.link) + '" target="_blank" rel="noopener">' + esc(n.linkLabel || 'Open') + ' →</a></p>' : '') +
+        '<div class="actions"><button class="btn ghost sm" data-toggle="' + esc(n.id) + '">' + (n.active === false ? 'Turn on' : 'Turn off') + '</button><button class="btn danger sm" data-del="' + esc(n.id) + '">Delete</button></div></div>';
+    }).join('') : '<p class="muted small">No messages yet.</p>';
+    document.querySelectorAll('[data-toggle]').forEach(function (b) {
+      b.onclick = function () {
+        var n = notices.notices.filter(function (x) { return x.id === b.dataset.toggle; })[0];
+        n.active = n.active === false; b.disabled = true;
+        saveNotices((n.active ? 'Show' : 'Hide') + ' message: ' + n.title).then(function () { toast(n.active ? 'Message turned on' : 'Message turned off'); }).catch(function (e) { n.active = !n.active; toast(friendly(e), 5000); loadNotices(); });
+      };
+    });
+    document.querySelectorAll('[data-del]').forEach(function (b) {
+      b.onclick = function () {
+        if (!confirm('Delete this message?')) return;
+        var keep = notices.notices.filter(function (x) { return x.id !== b.dataset.del; });
+        var old = notices.notices; notices.notices = keep; b.disabled = true;
+        saveNotices('Delete message').then(function () { toast('Message deleted'); }).catch(function (e) { notices.notices = old; toast(friendly(e), 5000); loadNotices(); });
+      };
+    });
+  }
+
+  function loadReleases() {
+    return gh('/releases?per_page=30').then(function (list) {
+      releases = list;
+      var total = list.reduce(function (a, r) { return a + (r.assets || []).reduce(function (s, x) { return s + (x.download_count || 0); }, 0); }, 0);
+      var latest = list.slice().sort(function (a, b) { return cmp(b.tag_name, a.tag_name); })[0];
+      $('#stVersion').textContent = latest ? latest.tag_name.replace(/^v/, '') : '—';
+      $('#stDate').textContent = latest ? when(latest.published_at) : '';
+      $('#stDownloads').textContent = total;
+      var sel = $('#minSel'), cur = notices.minVersion || '';
+      sel.innerHTML = '<option value="">None (no forced update)</option>' + list.map(function (r) { var v = r.tag_name.replace(/^v/, ''); return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
+      if (cur && !list.some(function (r) { return r.tag_name.replace(/^v/, '') === cur; })) sel.insertAdjacentHTML('beforeend', '<option>' + esc(cur) + '</option>');
+      sel.value = cur;
+      $('#releases').innerHTML = list.length ? list.slice(0, 8).map(function (r) {
+        var dl = (r.assets || []).reduce(function (s, x) { return s + (x.download_count || 0); }, 0);
+        var notes = String(r.body || '').replace(/\*\*/g, '');
+        return '<div class="row"><div><b>' + esc(r.tag_name.replace(/^v/, '')) + '</b> <span class="small muted">' + when(r.published_at) + '</span>' +
+          (notes && !/^Download/i.test(notes) ? '<div class="small muted">' + esc(notes.split('\n')[0].slice(0, 90)) + '</div>' : '') + '</div><span class="small muted">' + dl + ' downloads</span></div>';
+      }).join('') : '<p class="muted small">No versions yet.</p>';
+    }).catch(function (e) { $('#releases').innerHTML = '<p class="small muted">' + esc(friendly(e)) + '</p>'; });
+  }
+
+  var polling;
+  function loadRuns() {
+    return gh('/actions/runs?per_page=6').then(function (r) {
+      var runs = r.workflow_runs || [];
+      var first = runs[0];
+      if (first) {
+        $('#stBuild').innerHTML = first.status !== 'completed' ? '<span class="pill run">Building</span>' : first.conclusion === 'success' ? '<span class="pill ok">OK</span>' : '<span class="pill bad">Failed</span>';
+        $('#stBuildWhen').textContent = when(first.created_at);
+      }
+      $('#runs').innerHTML = runs.length ? runs.map(function (x) {
+        var st = x.status !== 'completed' ? '<span class="pill run">Building…</span>' : x.conclusion === 'success' ? '<span class="pill ok">Done</span>' : '<span class="pill bad">' + esc(x.conclusion || 'failed') + '</span>';
+        var title = (x.display_title || x.name || '').split('\n')[0];
+        return '<div class="row"><div><b class="small">' + esc(title.slice(0, 60)) + '</b><div class="small muted">#' + x.run_number + ' · ' + when(x.created_at) + '</div></div>' + st + '</div>';
+      }).join('') : '<p class="muted small">No builds yet.</p>';
+      clearTimeout(polling);
+      if (runs.some(function (x) { return x.status !== 'completed'; })) { polling = setTimeout(function () { loadRuns().then(loadReleases).then(loadNotices); }, 15000); }
+    }).catch(function (e) { $('#runs').innerHTML = '<p class="small muted">' + esc(friendly(e)) + '</p>'; });
+  }
+  $('#refresh').onclick = loadAll;
+
+  // ---------- Compose ----------
+  function draft() {
+    return {
+      type: $('#mType').value, target: $('#mTarget').value,
+      title: $('#mTitle').value.trim(), message: $('#mMsg').value.trim(),
+      link: $('#mLink').value.trim(), linkLabel: $('#mLinkLabel').value.trim(),
+      expires: $('#mExpires').value, maxVersion: $('#mMax').value.trim().replace(/^v/, '')
+    };
+  }
+  function renderPreview() {
+    var d = draft();
+    $('#preview').innerHTML = '<div class="n-ic">' + (ICON[d.type] || ICON.info) + '</div><div><b>' + esc(d.title || 'Title') + '</b><div class="small" style="margin-top:4px;white-space:pre-line">' + esc(d.message || 'Your message…') + '</div>' +
+      (d.link ? '<div style="margin-top:10px"><span class="btn ghost sm">' + esc(d.linkLabel || 'Open') + '</span></div>' : '') + '</div>';
+  }
+  ['#mType', '#mTitle', '#mMsg', '#mLink', '#mLinkLabel'].forEach(function (s) { $(s).addEventListener('input', renderPreview); });
+  renderPreview();
+
+  $('#sendUpdateTpl').onclick = function () {
+    var v = $('#stVersion').textContent;
+    $('#mType').value = 'update';
+    $('#mTitle').value = 'New version ' + (v !== '—' ? v : '') + ' is ready';
+    $('#mMsg').value = 'A new version of the 9Wings app is available. Open More → Updates & messages and tap Update now. Your data stays on the phone.';
+    $('#mTarget').value = 'android';
+    renderPreview();
+  };
+
+  $('#send').onclick = function () {
+    var d = draft();
+    if (!d.title || !d.message) return toast('Add a title and a message');
+    if (d.link && !/^https?:\/\//i.test(d.link)) return toast('The link must start with https://');
+    var n = { id: 'n' + Date.now().toString(36), created: new Date().toISOString(), active: true };
+    Object.keys(d).forEach(function (k) { if (d[k]) n[k] = d[k]; });
+    var b = this; b.disabled = true; b.textContent = 'Sending…';
+    loadNotices().then(function () {
+      notices.notices.push(n);
+      return saveNotices('Message: ' + n.title);
+    }).then(function () {
+      toast('Message sent ✓ — users see it next time they open the app');
+      ['#mTitle', '#mMsg', '#mLink', '#mLinkLabel', '#mExpires', '#mMax'].forEach(function (s) { $(s).value = ''; });
+      renderPreview();
+    }).catch(function (e) { toast(friendly(e), 5000); loadNotices(); }).then(function () { b.disabled = false; b.textContent = 'Send message'; });
+  };
+
+  // ---------- Required version ----------
+  $('#saveMin').onclick = function () {
+    var v = $('#minSel').value, b = this; b.disabled = true;
+    loadNotices().then(function () { notices.minVersion = v; return saveNotices(v ? 'Require version ' + v : 'Remove required version'); })
+      .then(function () { toast(v ? 'Version ' + v + ' is now required' : 'No forced update'); })
+      .catch(function (e) { toast(friendly(e), 5000); }).then(function () { b.disabled = false; });
+  };
+
+  // ---------- Publish update ----------
+  $('#build').onclick = function () {
+    var notes = $('#notes').value.trim();
+    var required = $('#makeRequired').checked;
+    if (!confirm('Build and publish a new version now?' + (required ? '\n\nUsers will have to update before using the app.' : ''))) return;
+    var b = this; b.disabled = true; b.textContent = 'Starting…';
+    gh('/actions/workflows/' + WORKFLOW + '/dispatches', { method: 'POST', body: { ref: 'main', inputs: { notes: notes, required: String(required) } } }).then(function () {
+      $('#buildMsg').textContent = 'Build started. It takes about 3 minutes — this page updates by itself.';
+      toast('Build started ✓');
+      if (required) $('#buildMsg').textContent += ' The new version becomes required automatically when the build finishes.';
+      $('#notes').value = ''; $('#makeRequired').checked = false;
+      setTimeout(loadRuns, 4000);
+    }).catch(function (e) { toast(friendly(e), 6000); }).then(function () { b.disabled = false; b.textContent = 'Build & publish update'; });
+  };
+  // ---------- Start ----------
+  token = store('nw-admin-token') || '';
+  if (token) { showApp(); loadAll(); } else showLogin();
+})();
+</script>
+</body>
+</html>

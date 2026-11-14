@@ -1,6 +1,6 @@
 // Offline support for the web version: keeps the app files on the phone.
-const VERSION = '9wings-v1.0.0';
-const FILES = ['./', 'index.html', 'css/styles.css', 'js/app.js', 'js/db.js', 'js/logic.js', 'js/pdf.js', 'js/native.js', 'js/sync.js', 'pdf-lib.min.js', 'manifest.webmanifest', 'img/logo.jpg', 'img/floral.jpg', 'img/icon-192.png', 'img/icon-512.png'];
+const VERSION = '9wings-v1.1.0';
+const FILES = ['./', 'index.html', 'css/styles.css', 'js/app.js', 'js/db.js', 'js/logic.js', 'js/pdf.js', 'js/native.js', 'js/sync.js', 'js/updates.js', 'pdf-lib.min.js', 'manifest.webmanifest', 'img/logo.jpg', 'img/floral.jpg', 'img/icon-192.png', 'img/icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
