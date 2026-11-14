@@ -75,6 +75,11 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: QR code for the download page
+        run: npx --yes qrcode@1.5.4 -t svg -w 300 -q 1 -o www/img/download-qr.svg "https://sheranr.github.io/9wings-app/download/"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
