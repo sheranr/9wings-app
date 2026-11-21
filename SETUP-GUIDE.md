@@ -1,123 +1,86 @@
-# 9Wings Event app — Setup guide
+# 9Wings Flora & Wedding app — Setup guide
 
-The app has three parts:
-
-| Part | What it is | Where it lives |
+| Part | What it is | Link |
 |---|---|---|
-| **Android app** | The main app on your phone. Works offline. Sends alerts even when closed. | Installed from an `.apk` file |
-| **Web app** | The same app in a browser (iPhone, laptop, tablet). Works offline after first open. | A free GitHub Pages link |
-| **Google Sheet** | Backup copy of all data, and a way to move data to a new phone. | Your new Google account |
-
-Setup takes about 30–40 minutes, once. A computer makes steps 2–3 much easier.
+| **Android app** | Main app on the phone. Works offline, sends reminders even when closed. | https://sheranr.github.io/9wings-app/download/ |
+| **Web app** | The same app for iPhone, tablet and computer. | https://sheranr.github.io/9wings-app/ |
+| **Online database** | Firebase (Google). Stores all data securely; syncs every phone and computer; works offline. | https://console.firebase.google.com |
+| **App Manager** | For the developer: send messages to users, publish updates. | https://sheranr.github.io/9wings-app/admin/ |
 
 ---
 
-## Step 1 — Create the business Google account
+## 1. Create the Firebase project (once)
 
-1. Go to <https://accounts.google.com/signup> and create a new account (for example `9wingsevent@gmail.com`).
-2. Sign in to this account on your phone (Settings → Accounts → Add account → Google).
+1. Open https://console.firebase.google.com with the business Gmail → **Create a project** → name `9wings-app` → turn **off** Google Analytics → **Create**.
+2. **Build → Authentication → Get started → Email/Password → Enable → Save.**
+3. **Build → Firestore Database → Create database** → location **asia-south1 (Mumbai)** → **Start in production mode** → **Create**.
+4. **Firestore Database → Rules** → delete everything, paste the contents of `firestore.rules` from this repository → **Publish**.
+5. **⚙ Project settings → Your apps → </> (Web)** → nickname `9wings` → **Register app** → copy the `firebaseConfig` block.
+6. Put those values into `www/js/firebase-config.js` (replace `null` with the config object) and push to GitHub. The app and web app rebuild automatically (about 3 minutes).
 
-## Step 2 — GitHub (builds the Android app and hosts the web app — free)
+The Firebase free plan (Spark) is enough for a business of this size.
 
-1. Go to <https://github.com/signup> and create a free account (you can use the new Gmail).
-2. Click **+** (top right) → **New repository**.
-   - Name: `9wings-app`
-   - Choose **Public** (needed for the free web link; your customer data is **never** stored here — only the app itself).
-   - Click **Create repository**.
-3. Click **uploading an existing file**. Unzip `9wings-app.zip` on your computer, open the `9wings-app` folder, select **everything inside it** (including the `.github` folder) and drag it into the page. Click **Commit changes**.
-   - If the `.github` folder did not upload: click **Add file → Create new file**, type the name `.github/workflows/build.yml`, paste the contents of that file from the zip, and click **Commit changes**.
-4. Add the signing key (keeps app updates working):
-   - Open **Settings → Secrets and variables → Actions → New repository secret**.
-   - Name: `KEYSTORE_BASE64`
-   - Value: open `KEYSTORE_BASE64.txt` (sent separately — **not** in the zip) and paste the whole text.
-   - Click **Add secret**.
-5. Turn on the web link: **Settings → Pages → Source: GitHub Actions**.
-6. Start the build: **Actions** tab → **Build 9Wings app** → **Run workflow**. Wait about 5–8 minutes until both jobs are green ✓.
+## 2. First sign-in — create the owner account
 
-Results:
-- **Android app:** on the repository page, click **Releases** (right side) → download **9Wings-Event.apk**.
-- **Web app:** `https://YOUR-GITHUB-NAME.github.io/9wings-app/`
+1. Install the new app (download page) or open the web app.
+2. The first screen says **Set up your business**. Enter the owner's name, email and a password (at least 8 characters).
+3. This account becomes the **owner**. Only one owner account can be created this way; after that the screen shows **Sign in**.
 
-> Keep `9wings-release.jks` and `KEYSTORE_BASE64.txt` safe (e.g. in the business Google Drive). Without them, future updates cannot install over the old app.
+## 3. Move existing data
 
-## Step 3 — Google Sheet backup
+If the phone already has data from the earlier version, the dashboard shows **Move your existing data**. Tap **Move**. Clients, bookings, invoices, payments, the price list and settings (phones, terms, bank details) are copied into the online database. Your data stays on the phone as well, so nothing is lost.
 
-1. Signed in with the business Gmail, open <https://sheets.new>. Name the sheet **9Wings Data**.
-2. Click **Extensions → Apps Script**. Delete everything in the editor.
-3. Paste the full contents of `apps-script/Code.gs` from the zip.
-4. Near the top, change
-   `const SECRET_KEY = 'CHANGE-ME-to-your-own-secret';`
-   to your own secret words, e.g. `const SECRET_KEY = 'golden-swan-2026-k7';` — write it down.
-5. Click **Save** (disk icon). In the function list choose **setup** and click **Run**. Google asks for permission: **Review permissions → choose the account → Advanced → Go to project (unsafe) → Allow**. (It says "unsafe" only because you wrote the script yourself.)
-6. Click **Deploy → New deployment → ⚙ → Web app**.
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-   - Click **Deploy** and copy the **Web app URL** (ends with `/exec`).
-7. In the app: **More → Backup to Google Sheet** → paste the URL and the secret key → **Save** → **Test connection** → **Sync now**.
+You can also do this later: **More → Data & backup → Move data from this device**.
 
-The sheet now has tabs: Customers, Bookings, Invoices, Items, Offers, Settings. They are protected — please make changes in the app, not in the sheet.
+## 4. Add staff
 
-## Step 4 — Install on Android
+**More → Team → Add staff member** → name, email, temporary password → **Create login**. Share the login with them (the **Copy** button copies the details and the download link).
 
-1. On the phone, open the **Releases** page and download **9Wings-Event.apk**.
-2. Open the file. If asked, allow **Install unknown apps** for your browser or Files app.
-3. Open the app and tap **Allow** when it asks for notifications.
-4. For reliable alerts: long-press the app icon → **App info → Battery → Unrestricted** (Samsung: "Unrestricted"; Xiaomi/Redmi: "No restrictions" and turn on **Autostart**).
+| | Owner | Staff |
+|---|---|---|
+| Clients, bookings, invoices, payments, expenses, services | ✓ | ✓ |
+| Delete invoices or payments | ✓ | – |
+| Business settings, team | ✓ | – |
 
-**Updating later:** each new build appears in Releases. Download and install it over the old app — your data stays.
+To stop someone signing in: **Team → Manage → untick "Can sign in"**.
 
-## Step 5 — Web app (iPhone, laptop, tablet)
+## 5. Install on phones
 
-- **iPhone:** open the web link in **Safari** → Share button → **Add to Home Screen**.
-- **Android (optional):** open in Chrome → ⋮ → **Add to Home screen**.
-- **Laptop:** open the link in Chrome or Edge.
-
-The web app shows alerts when you open it. Only the Android app can alert you while closed.
+- **Android:** open the download page → **Download for Android** → open the file → **Install**. Allow notifications. For reliable reminders: long-press the icon → **App info → Battery → Unrestricted**.
+- **iPhone:** open the web app in **Safari → Share → Add to Home Screen**.
+- **Computer:** open the web app in Chrome or Edge.
 
 ---
 
 ## Daily use
 
-- **New booking:** tap **+** → choose or add the customer → event type, date, venue → Save. "Remind me every year" is ticked automatically for weddings, engagements, birthdays and anniversaries.
-- **Quotation / invoice:** open the booking → **Create quotation / invoice** → add items (suggestions come from the price list) → add payments → **Share PDF** (send straight to WhatsApp).
-- **Quotation → invoice:** open the quotation → **Convert to invoice**.
-- **Anniversary / birthday offers:** shown on **Home** 30 days before (and you get notifications at 30 and 7 days). Tap **Send offer**, adjust the discount (10% by default), and send in WhatsApp.
-- **Calendar:** gold dot = event, pink = anniversary/birthday, black = payment due.
-- **Sync:** tap the sync icon (top right of Home) → **Sync now**. A red dot means you haven't synced for 3 days.
+- **New booking:** the **+** button → 4 steps: client → event → services & price → status. If the client paid an advance, enter it in step 3 — an invoice is created with the advance recorded.
+- **Invoices:** open a booking → **Invoice**, or **Invoices → +**. Choose Quotation or Invoice, add items (or **From services** to pick services and packages). Open the invoice to **Share PDF** to WhatsApp, record payments (advance, partial, final, refund) and send a **payment reminder**.
+- **Quotation accepted:** open it → **Convert**.
+- **Calendar:** month, week and list views. Gold dot = event, purple = anniversary/birthday, dark = payment due.
+- **Anniversary & birthday offers:** shown on the dashboard 30 days before (with phone reminders at 30 and 7 days). Tap **Send**, adjust the discount (10% by default) and send in WhatsApp.
+- **Expenses:** **More → Expenses → +** — category, supplier, related booking. The dashboard and reports show profit (money received − expenses).
+- **Services & packages:** **More → Services & packages** — prices fill in automatically on invoices.
+- **Reports:** revenue, expenses and profit by month, bookings by type, payment methods, top clients, offer results.
 
-## Using more than one device
+## Working offline
 
-Each device keeps its own copy of the data. Use one main device (the Android phone) for daily work and sync it. To see the latest data on another device, open **More → Backup to Google Sheet → Restore from sheet** on that device.
+Everything works without internet. Changes are saved on the device and sync automatically when the connection returns. Invoice numbers are taken from the shared counter when online; offline, the next free number on that device is used.
 
-## New phone / lost phone
+## Backups
 
-Install the app → **More → Backup to Google Sheet** → enter the link and key → **Restore from sheet**.
+The online database is the main copy. For extra safety, once a month: **More → Data & backup → Save backup** and keep the file in Google Drive. **Restore** (owner only) merges a backup file back in — newer records in the app are kept.
 
-## Extra safety
+## Settings (owner)
 
-**More → Save backup file** creates a single file with all data. Save it to Google Drive once a month.
-
-## Changing business details
-
-**More → Settings**: business name, phone numbers, terms, bank details, alert days, payment due days, default discount and the WhatsApp messages. Changes show on new PDFs straight away.
+**More → Settings:** business name, slogan, phone numbers, invoice prefix, terms, bank details, thank-you line, reminder days, payment due days, reminder time, default discount and the WhatsApp offer messages.
 
 ---
 
-## Updates and messages (for the app developer)
+## For the developer
 
-**Download page:** https://sheranr.github.io/9wings-app/download/ — always offers the newest Android version.
-
-**App Manager:** https://sheranr.github.io/9wings-app/admin/
-
-1. Create a GitHub access key: GitHub → Settings → Developer settings → Fine-grained tokens → Generate new token. Repository access: only **9wings-app**. Permissions: **Contents: Read and write**, **Actions: Read and write**.
-2. Open the App Manager, paste the key and tap **Connect**.
-
-From there you can:
-- **Send a message** — users get a phone notification and a pop-up the next time they open the app (usually within 5 minutes). Choose everyone, Android only or web only, add a button link, and set an end date.
-- **Turn messages off or delete them.**
-- **Publish an update** — builds a new Android version (about 3 minutes) with your "What's new" notes. Users see an **Update** banner, a pop-up and a phone notification; tapping **Update now** downloads the new version to install over the old one.
-- **Require a version** — anyone on an older version gets an update screen they can't close.
-
-New code pushed to GitHub also builds and publishes a new version automatically, using the commit message as "What's new".
-
-How users get it: the app checks for updates and messages when it opens, when it comes back on screen, and every 6 hours while open. The web app always loads the newest version by itself.
+- **Messages & updates:** App Manager → https://sheranr.github.io/9wings-app/admin/ (needs a GitHub fine-grained token for `9wings-app` with Contents and Actions read & write).
+- **Every push to `main`** builds a new Android version (Releases) and updates the web app. The app shows users an **Update** notification.
+- **Firebase library:** bundled in `www/vendor/firebase.js` so the app works offline. To update it: `npm install firebase esbuild && npx esbuild tools/firebase-entry.js --bundle --format=esm --minify --outfile=www/vendor/firebase.js`.
+- **Before Firebase is connected** (`firebase-config.js` is `null`) the app stores data on the device only; that data can be moved into Firebase later from the dashboard prompt.
+- Keep `9wings-release.jks` / `KEYSTORE_BASE64.txt` safe — without them updates can't install over the existing app.

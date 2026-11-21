@@ -1,0 +1,57 @@
+rules_version = '2';
+// 9Wings Flora & Wedding — who can read and change the data.
+// Paste into Firebase console → Firestore Database → Rules → Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function memberDoc() { return get(/databases/$(database)/documents/members/$(request.auth.uid)); }
+    function isMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/members/$(request.auth.uid))
+        && memberDoc().data.active == true;
+    }
+    function isOwner() { return isMember() && memberDoc().data.role == 'owner'; }
+
+    // Who owns the business. Anyone may check whether it exists (so the app knows to show "set up").
+    // Can be created once, by the first account, and never changed from the app.
+    match /meta/owner {
+      allow get: if true;
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/meta/owner)
+        && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+    // Invoice number counters.
+    match /meta/{docId} {
+      allow read, write: if docId != 'owner' && isMember();
+    }
+
+    // Team: the owner manages staff. The first owner creates their own record in the same step as /meta/owner.
+    match /members/{uid} {
+      allow read: if isMember() || (signedIn() && request.auth.uid == uid);
+      allow create: if isOwner()
+        || (signedIn() && uid == request.auth.uid
+            && request.resource.data.role == 'owner'
+            && getAfter(/databases/$(database)/documents/meta/owner).data.uid == request.auth.uid);
+      allow update: if isOwner() && (uid != request.auth.uid || (request.resource.data.role == 'owner' && request.resource.data.active == true));
+      allow delete: if isOwner() && uid != request.auth.uid;
+    }
+
+    // Business settings: everyone in the team reads, only the owner changes.
+    match /settings/{docId} {
+      allow read: if isMember();
+      allow write: if isOwner();
+    }
+
+    // Invoices: staff create and update; only the owner deletes.
+    match /invoices/{id} {
+      allow read, create, update: if isMember();
+      allow delete: if isOwner();
+    }
+
+    // Everything else the app uses.
+    match /{coll}/{id} {
+      allow read, write: if isMember() && coll in ['customers', 'events', 'items', 'packages', 'expenses', 'offers'];
+    }
+  }
+}

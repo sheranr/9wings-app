@@ -43,7 +43,7 @@ jobs:
       - name: Create Android project
         run: |
           npx cap add android
-          npx capacitor-assets generate --android --iconBackgroundColor '#ffffff' --splashBackgroundColor '#ffffff'
+          npx capacitor-assets generate --android --iconBackgroundColor '#FAF7F1' --splashBackgroundColor '#FAF7F1'
           mkdir -p android/app/src/main/res/drawable
           cp assets/ic_stat_9wings.png android/app/src/main/res/drawable/ic_stat_9wings.png
           # notification permission (Android 13+)

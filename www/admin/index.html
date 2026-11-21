@@ -8,19 +8,22 @@
 <title>9Wings App Manager</title>
 <link rel="icon" href="../img/icon-192.png">
 <style>
+  @font-face { font-family: 'Playfair Display'; font-weight: 600; font-display: swap; src: url(../fonts/playfair-display-latin-600-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Inter'; font-weight: 400; font-display: swap; src: url(../fonts/inter-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Inter'; font-weight: 600; font-display: swap; src: url(../fonts/inter-latin-600-normal.woff2) format('woff2'); }
   :root {
-    --gold: #B8892F; --gold-2: #D9B25F; --gold-soft: #F6EEDC;
-    --ink: #171512; --muted: #7A746A; --line: #ECE6DA; --bg: #FBF8F2; --card: #fff;
+    --gold: #321342; --gold-2: #C5A46D; --gold-soft: #F4F0F8;
+    --ink: #321342; --muted: #8A858C; --line: #ECE4DC; --bg: #FAF7F1; --card: #fff;
     --neg: #B4442E; --pos: #2F7D4F;
-    --serif: Georgia, "Times New Roman", serif;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --serif: 'Playfair Display', Georgia, serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); }
   a { color: var(--gold); }
   .top { background: var(--ink); color: #fff; }
   .top .in { max-width: 1100px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
-  .top img { width: 36px; height: 36px; border-radius: 9px; background: #fff; }
+  .top img { height: 38px; width: auto; border-radius: 8px; background: #FAF7F1; padding: 2px 6px; }
   .top h1 { font: 600 18px var(--serif); margin: 0; flex: 1; }
   .top h1 span { color: var(--gold-2); }
   .top button { background: none; border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 10px; padding: 7px 12px; font: 600 13px var(--sans); cursor: pointer; }
@@ -38,10 +41,10 @@
   .stat small { display: block; color: var(--muted); font-size: 12px; }
   label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 12px 0 5px; }
   input, select, textarea { width: 100%; font: 15px var(--sans); color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; outline: none; }
-  input:focus, select:focus, textarea:focus { border-color: var(--gold-2); box-shadow: 0 0 0 3px rgba(217,178,95,.2); }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold-2); box-shadow: 0 0 0 3px rgba(99,71,145,.15); }
   textarea { resize: vertical; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 18px; border-radius: 11px; border: 1px solid transparent; background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: #fff; font: 600 14px var(--sans); cursor: pointer; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 18px; border-radius: 11px; border: 1px solid transparent; background: var(--gold); color: #fff; font: 600 14px var(--sans); cursor: pointer; }
   .btn:disabled { opacity: .55; cursor: default; }
   .btn.ghost { background: #fff; color: var(--ink); border-color: var(--line); }
   .btn.dark { background: var(--ink); }
@@ -85,7 +88,7 @@
 </head>
 <body>
 <header class="top"><div class="in">
-  <img src="../img/logo.jpg" alt="">
+  <img src="../img/logo-header.webp" alt="">
   <h1>9Wings <span>App Manager</span></h1>
   <button id="logout" class="hidden">Disconnect</button>
 </div></header>

@@ -1,5 +1,5 @@
 // Bridges to the phone: Android app (Capacitor) features with web fallbacks.
-import { nextOccurrence, alertDays, addDays, parseISO, totals, occasionOf, ordinal, fmtNice, todayISO } from './logic.js';
+import { nextOccurrence, alertDays, addDays, parseISO, totals, occasionOf, ordinal, fmtNice, todayISO, dueDate, moneyShort } from './logic.js';
 
 const Cap = () => window.Capacitor;
 export const isNative = () => !!(Cap() && Cap().isNativePlatform && Cap().isNativePlatform());
@@ -86,20 +86,21 @@ export function plannedNotifications({ events, invoices, customers, settings }) 
     }
     if (ev.date && ev.status !== 'Completed') {
       const when = at(addDays(ev.date, -1), hour);
-      if (when > now) list.push({ id: hashId(`e:${ev.id}:${ev.date}`), when, title: `Tomorrow: ${ev.type}`, body: `${who}${ev.venue ? ' at ' + ev.venue : ''}`, extra: { route: '#/event/' + ev.id } });
+      if (when > now) list.push({ id: hashId(`e:${ev.id}:${ev.date}`), when, title: `Tomorrow: ${ev.type}`, body: `${who}${ev.venue ? ' at ' + ev.venue : ''}`, extra: { route: '#/booking/' + ev.id } });
     }
   }
   const evById = Object.fromEntries(events.map(e => [e.id, e]));
   for (const inv of invoices) {
     if (inv.docType !== 'invoice') continue;
     const ev = evById[inv.eventId];
-    if (!ev || !ev.date || ev.status === 'Cancelled') continue;
+    if (ev?.status === 'Cancelled') continue;
     const bal = totals(inv).balance;
     if (bal <= 0.009) continue;
-    const due = addDays(ev.date, -(Number(settings.paymentDueDays) || 10));
+    const due = dueDate(inv, ev, settings);
+    if (!due) continue;
     for (const d of [2, 0]) {
       const when = at(addDays(due, -d), hour);
-      if (when > now) list.push({ id: hashId(`p:${inv.id}:${due}:${d}`), when, title: d ? `Payment due in ${d} days` : 'Payment due today', body: `${cust[inv.customerId]?.name || ''} — balance Rs. ${bal.toLocaleString('en-US')} (${inv.number})`, extra: { route: '#/invoice/' + inv.id } });
+      if (when > now) list.push({ id: hashId(`p:${inv.id}:${due}:${d}`), when, title: d ? `Payment due in ${d} days` : 'Payment due today', body: `${cust[inv.customerId]?.name || ''} — balance ${moneyShort(bal)} (${inv.number})`, extra: { route: '#/invoice/' + inv.id } });
     }
   }
   return list.sort((a, b) => a.when - b.when).slice(0, 60);
@@ -146,7 +147,7 @@ export async function webSummaryNotification(count) {
     try {
       const reg = await navigator.serviceWorker?.getRegistration();
       const opts = { body: `${count} alert${count > 1 ? 's' : ''} need your attention.`, icon: 'img/icon-192.png' };
-      if (reg) reg.showNotification('9Wings Event', opts); else new Notification('9Wings Event', opts);
+      if (reg) reg.showNotification('9Wings', opts); else new Notification('9Wings', opts);
       localStorage.setItem(key, '1');
     } catch (e) { /* ignore */ }
   }

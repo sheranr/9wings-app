@@ -1,6 +1,6 @@
 {
   "appId": "lk.ninewings.event",
-  "appName": "9Wings Event",
+  "appName": "9Wings",
   "webDir": "www",
   "android": {
     "allowMixedContent": false
@@ -8,7 +8,7 @@
   "plugins": {
     "LocalNotifications": {
       "smallIcon": "ic_stat_9wings",
-      "iconColor": "#B8892F"
+      "iconColor": "#321342"
     }
   }
 }

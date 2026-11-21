@@ -118,7 +118,7 @@ export async function check(ui, { force = false } = {}) {
       const key = 'notified-update-' + state.latest.version;
       if (!store.get(key, false)) {
         store.set(key, true);
-        notify(idFor('u' + state.latest.version), 'Update available — 9Wings Event ' + state.latest.version, 'Tap to update to the newest version.', { route: '#/updates' });
+        notify(idFor('u' + state.latest.version), 'Update available — 9Wings ' + state.latest.version, 'Tap to update to the newest version.', { route: '#/updates' });
       }
       if (state.forced || store.get('dismissed-update', '') !== state.latest.version) ui?.showUpdate?.(state.latest, state.forced);
     }
