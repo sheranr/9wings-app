@@ -2,6 +2,7 @@
 import * as L from '../logic.js';
 import { S, custName } from '../state.js';
 import { $, $$, icon, esc, eyebrow, topbar } from '../ui.js';
+import { exportSheet } from '../report.js';
 
 function bars(values, labels, cur, fmt) {
   const max = Math.max(1, ...values.map(v => Math.max(0, v)));
@@ -43,10 +44,11 @@ export async function reportsView(yearArg) {
   const offersYr = S.offers.filter(o => String(o.year) === year || (o.sentAt || '').startsWith(year));
   const offerBooked = offersYr.filter(o => S.events.some(e => e.customerId === o.customerId && e.createdAt > o.sentAt)).length;
 
-  $('#main').innerHTML = `${topbar('Reports', { back: true })}
+  $('#main').innerHTML = `${topbar('Reports', { back: true, actions: `<button class="icon-btn" id="exp2" aria-label="Export">${icon('download')}</button>` })}
   <div class="page wide">
-    <div class="page-head" style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div><h2>Reports</h2><p>Based on payments, expenses and bookings recorded in the app.</p></div>
-      <select id="yr" aria-label="Year" style="width:auto">${years.map(y => `<option ${y === year ? 'selected' : ''}>${y}</option>`).join('')}</select></div>
+    <div class="page-head" style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px"><div style="flex:1 1 280px"><h2>Reports</h2><p>Based on payments, expenses and bookings recorded in the app.</p></div>
+      <div style="display:flex;gap:8px"><select id="yr" aria-label="Year" style="width:auto">${years.map(y => `<option ${y === year ? 'selected' : ''}>${y}</option>`).join('')}</select>
+      <button class="btn" id="exp">${icon('download')} Export</button></div></div>
     <div class="kpis">
       <div class="kpi dark"><span>Received ${year}</span><b>${L.moneyShort(fy.received)}</b><small>Invoiced ${L.moneyShort(billed)}</small></div>
       <div class="kpi"><span>Expenses</span><b>${L.moneyShort(fy.spent)}</b></div>
@@ -74,4 +76,5 @@ export async function reportsView(yearArg) {
     </div></div>
   </div>`;
   $('#yr').onchange = e => reportsView(e.target.value);
+  [$('#exp'), $('#exp2')].forEach(b => b.onclick = () => exportSheet(year));
 }

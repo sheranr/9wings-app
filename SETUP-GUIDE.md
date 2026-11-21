@@ -62,6 +62,7 @@ To stop someone signing in: **Team → Manage → untick "Can sign in"**.
 - **Expenses:** **More → Expenses → +** — category, supplier, related booking. The dashboard and reports show profit (money received − expenses).
 - **Services & packages:** **More → Services & packages** — prices fill in automatically on invoices.
 - **Reports:** revenue, expenses and profit by month, bookings by type, payment methods, top clients, offer results.
+- **Export:** **Reports → Export** (also on Payments and Expenses) → choose a month, a year or all time → **Excel** (sheets: Summary, Payments, Expenses, Invoices, Bookings, Balances) or a branded **PDF report**. Share it straight to WhatsApp, email or Drive.
 
 ## Working offline
 

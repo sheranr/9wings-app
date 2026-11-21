@@ -3,6 +3,7 @@ import * as D from '../data.js';
 import * as L from '../logic.js';
 import { S, isOwner, custName, evLabel } from '../state.js';
 import { $, $$, go, icon, esc, toast, sheet, closeSheet, badge, empty, eyebrow, topbar, confirmBox, formData } from '../ui.js';
+import { exportSheet } from '../report.js';
 
 function periodOptions(sel) {
   const t = L.todayISO(), y = t.slice(0, 4);
@@ -16,7 +17,7 @@ const ssSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* i
 // ---------- payments ----------
 export async function paymentsView() {
   let period = ssGet('nw-pay-p', L.todayISO().slice(0, 7)), type = ssGet('nw-pay-t', 'All'), method = ssGet('nw-pay-m', 'All');
-  $('#main').innerHTML = `${topbar('Payments', { actions: `<a class="icon-btn" href="#/invoices" aria-label="Invoices">${icon('invoice')}</a>` })}
+  $('#main').innerHTML = `${topbar('Payments', { actions: `<button class="icon-btn" id="exp" aria-label="Export">${icon('download')}</button><a class="icon-btn" href="#/invoices" aria-label="Invoices">${icon('invoice')}</a>` })}
   <div class="page wide">
     <div class="page-head"><h2>Payments</h2><p>Advances, part and final payments, and refunds across all invoices.</p></div>
     <div class="toolbar"><select id="per" aria-label="Period" style="flex:1">${periodOptions(period)}</select>
@@ -47,6 +48,7 @@ export async function paymentsView() {
           <div class="end"><b class="${p.type === 'Refund' ? 'neg' : ''}">${p.type === 'Refund' ? '− ' : ''}${L.moneyShort(p.amount)}</b><span class="tiny muted">${esc(p.type || 'Payment')}${p.method ? ' · ' + esc(p.method) : ''}</span></div></a>`; }).join('')}</div>`).join('')
         : `<div class="list" style="margin-top:14px">${empty('wallet', 'No payments', 'Payments are recorded on invoices. Open an invoice and tap Payment.', '<a class="btn secondary" href="#/invoices">Go to invoices</a>')}</div>`}`;
   };
+  $('#exp').onclick = () => exportSheet(period);
   $('#per').onchange = e => { period = e.target.value; draw(); };
   $('#mth').onchange = e => { method = e.target.value; draw(); };
   $$('#chips .chip').forEach(c => c.onclick = () => { type = c.dataset.t; $$('#chips .chip').forEach(x => x.classList.toggle('on', x === c)); draw(); });
@@ -56,7 +58,7 @@ export async function paymentsView() {
 // ---------- expenses ----------
 export async function expensesView() {
   let period = ssGet('nw-exp-p', L.todayISO().slice(0, 7)), cat = ssGet('nw-exp-c', 'All');
-  $('#main').innerHTML = `${topbar('Expenses', { actions: `<a class="icon-btn" href="#/expense/new" aria-label="Add expense">${icon('plus')}</a>` })}
+  $('#main').innerHTML = `${topbar('Expenses', { actions: `<button class="icon-btn" id="exp" aria-label="Export">${icon('download')}</button><a class="icon-btn" href="#/expense/new" aria-label="Add expense">${icon('plus')}</a>` })}
   <div class="page wide">
     <div class="page-head"><h2>Expenses</h2><p>Flowers, materials, transport, labour and other costs.</p></div>
     <div class="toolbar"><select id="per" aria-label="Period" style="flex:1">${periodOptions(period)}</select>
@@ -89,6 +91,7 @@ export async function expensesView() {
           <div class="end"><b>${L.moneyShort(x.amount)}</b>${x.method ? `<span class="tiny muted">${esc(x.method)}</span>` : ''}</div></a>`).join('')}</div>`
         : `<div class="list">${empty('receipt', 'No expenses', 'Record costs to see your real profit.', '<a class="btn" href="#/expense/new">' + icon('plus') + ' Add expense</a>')}</div>`}`;
   };
+  $('#exp').onclick = () => exportSheet(period);
   $('#per').onchange = e => { period = e.target.value; draw(); };
   $('#cat').onchange = e => { cat = e.target.value; draw(); };
   $('#q').oninput = draw;
