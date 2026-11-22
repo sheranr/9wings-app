@@ -1,7 +1,7 @@
 // Services catalogue and packages (used for bookings and invoice items).
 import * as D from '../data.js';
 import * as L from '../logic.js';
-import { S } from '../state.js';
+import { S, isOwner } from '../state.js';
 import { $, $$, icon, esc, toast, sheet, closeSheet, empty, eyebrow, topbar, confirmBox } from '../ui.js';
 
 export async function servicesView() {
@@ -42,7 +42,7 @@ function serviceSheet(item) {
         <label class="field"><span>Price (LKR)</span><input name="price" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(it.price || '')}" placeholder="0.00"></label></div>
       <label class="field"><span>Description <em>— optional</em></span><textarea name="description" rows="2">${esc(it.description)}</textarea></label>
       <label class="check"><input type="checkbox" name="active" ${it.active !== false ? 'checked' : ''}> Offered (show in bookings and invoices)</label>
-      <div class="btns">${item ? `<button type="button" class="btn danger" id="del">${icon('trash')}</button>` : '<button type="button" class="btn secondary" data-close>Cancel</button>'}<button class="btn" type="submit" style="flex:3">Save</button></div>
+      <div class="btns">${item && isOwner() ? `<button type="button" class="btn danger" id="del">${icon('trash')}</button>` : '<button type="button" class="btn secondary" data-close>Cancel</button>'}<button class="btn" type="submit" style="flex:3">Save</button></div>
     </form>`, sh => {
     $('#sf', sh).onsubmit = e => {
       e.preventDefault();
@@ -65,7 +65,7 @@ function packageSheet(pkg) {
       <div class="label" style="margin:8px 0 6px">Included services</div>
       <div class="list" style="max-height:38vh;overflow:auto">${svcs.map(s => `<label class="row"><input type="checkbox" name="inc" value="${s.id}" ${(p.includes || []).includes(s.id) ? 'checked' : ''} style="width:20px;min-height:20px;accent-color:var(--plum)"><div class="grow t">${esc(s.name)}</div><span class="small muted num">${Number(s.price) ? L.moneyShort(s.price) : ''}</span></label>`).join('')}</div>
       <p class="small muted" id="sumInc"></p>
-      <div class="btns">${pkg ? `<button type="button" class="btn danger" id="del">${icon('trash')}</button>` : '<button type="button" class="btn secondary" data-close>Cancel</button>'}<button class="btn" type="submit" style="flex:3">Save</button></div>
+      <div class="btns">${pkg && isOwner() ? `<button type="button" class="btn danger" id="del">${icon('trash')}</button>` : '<button type="button" class="btn secondary" data-close>Cancel</button>'}<button class="btn" type="submit" style="flex:3">Save</button></div>
     </form>`, sh => {
     const sum = () => { const v = $$('[name=inc]:checked', sh).reduce((a, c) => a + (Number(svcs.find(s => s.id === c.value)?.price) || 0), 0); $('#sumInc', sh).textContent = v ? `Services bought separately: ${L.money(v)}` : ''; };
     $$('[name=inc]', sh).forEach(c => c.onchange = sum); sum();

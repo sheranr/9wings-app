@@ -8,6 +8,7 @@ export const STORES = ['customers', 'events', 'invoices', 'items', 'packages', '
 const BACKUP_STORES = ['customers', 'events', 'invoices', 'items', 'packages', 'expenses', 'offers', 'settings'];
 export const mode = FIREBASE_CONFIG && FIREBASE_CONFIG.projectId ? 'firebase' : 'device';
 
+const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
 const cache = Object.fromEntries(STORES.map(s => [s, new Map()]));
 let adapter = null;
@@ -112,7 +113,10 @@ export async function openBusiness({ owner = true } = {}) {
     const timer = setTimeout(() => { if (first) { first = false; resolve(); } }, 6000); // offline with empty cache
     unsubs.push(adapter.subscribe(store, (changes) => {
       const map = cache[store];
-      for (const c of changes) { if (c.type === 'removed') map.delete(c.id); else map.set(c.id, c.data); }
+      for (const c of changes) {
+        if (!SAFE_ID.test(String(c.id))) continue; // never render records with unexpected ids
+        if (c.type === 'removed') map.delete(c.id); else map.set(c.id, { ...c.data, id: c.id });
+      }
       if (first) { first = false; clearTimeout(timer); resolve(); }
       emit(store);
     }));
@@ -148,7 +152,7 @@ export function importAll(data) {
     if (s === 'settings' && Array.isArray(list)) list = list.map(r => ({ ...r, id: 'business' }));
     if (!Array.isArray(list)) continue;
     for (const r of list) {
-      if (!r || !r.id) continue;
+      if (!r || !r.id || !SAFE_ID.test(String(r.id))) continue;
       const cur = get(s, r.id);
       if (s === 'settings') {
         let { sheetUrl, sheetKey, lastSync, counters, ...rest } = r;

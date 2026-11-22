@@ -2,7 +2,7 @@
 import * as D from '../data.js';
 import * as L from '../logic.js';
 import * as N from '../native.js';
-import { S, invStatus } from '../state.js';
+import { S, isOwner, invStatus } from '../state.js';
 import { $, $$, go, icon, esc, toast, badge, empty, eyebrow, topbar, confirmBox, formData, initials } from '../ui.js';
 import { eventRow } from './home.js';
 
@@ -52,7 +52,7 @@ export async function clientForm(id) {
     <label class="field"><span>Address</span><textarea name="address" rows="2">${esc(c.address)}</textarea></label>
     <label class="field"><span>Notes</span><textarea name="notes" rows="3" placeholder="Preferences, family details, referrals…">${esc(c.notes)}</textarea></label>
     <div class="form-actions"><button class="btn" type="submit">${id ? 'Save changes' : 'Save client'}</button></div>
-    ${id ? `<button class="btn danger block" type="button" id="del">${icon('trash')} Delete client</button>` : ''}
+    ${id && isOwner() ? `<button class="btn danger block" type="button" id="del">${icon('trash')} Delete client</button>` : ''}
   </form></div>`;
   $('#cf').onsubmit = e => {
     e.preventDefault();

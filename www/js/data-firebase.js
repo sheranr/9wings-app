@@ -4,9 +4,13 @@ import {
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail,
   updatePassword, EmailAuthProvider, reauthenticateWithCredential,
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache,
-  collection, doc, getDoc, setDoc, deleteDoc, onSnapshot, writeBatch, runTransaction
+  collection, doc, getDoc, setDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, terminate, clearIndexedDbPersistence
 } from '../vendor/firebase.js';
 import { FIREBASE_CONFIG } from './firebase-config.js';
+
+function clearLocalSession() {
+  try { ['nw-me', 'nw-seen-notices', 'nw-notified-notices'].forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); } catch (e) { /* ignore */ }
+}
 
 export function create() {
   const app = initializeApp(FIREBASE_CONFIG);
@@ -49,7 +53,13 @@ export function create() {
     // ---------- auth & team ----------
     onAuth(cb) { return onAuthStateChanged(auth, u => cb(u ? { uid: u.uid, email: u.email } : null)); },
     signIn: (email, pw) => signInWithEmailAndPassword(auth, email, pw),
-    signOut: () => signOut(auth),
+    // Sign out and remove the offline copy of the business data from this device.
+    async signOut() {
+      try { await signOut(auth); } catch (e) { console.warn(e); }
+      try { await terminate(fs); await clearIndexedDbPersistence(fs); } catch (e) { console.warn('could not clear offline data', e); }
+      clearLocalSession();
+      location.reload();
+    },
     resetPassword: email => sendPasswordResetEmail(auth, email),
     async changePassword(oldPw, newPw) {
       const u = auth.currentUser;

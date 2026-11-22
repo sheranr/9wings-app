@@ -162,7 +162,29 @@ async function signedIn(user) {
 }
 let watching = false;
 
+// Content Security Policy: only this app's own scripts may run, and it only talks to Firebase and GitHub (updates).
+// Added at start-up (after the Android bridge has loaded) so it never blocks the phone features.
+function lockDown() {
+  if (document.querySelector('meta[http-equiv="Content-Security-Policy"]')) return;
+  const m = document.createElement('meta');
+  m.httpEquiv = 'Content-Security-Policy';
+  m.content = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "font-src 'self'",
+    "connect-src 'self' https://*.googleapis.com https://api.github.com https://raw.githubusercontent.com",
+    "frame-src https://*.firebaseapp.com",
+    "object-src blob:",
+    "base-uri 'self'",
+    "form-action 'none'"
+  ].join('; ');
+  document.head.prepend(m);
+}
+
 async function start() {
+  lockDown();
   boot();
   await D.start();
   D.onSaveError(msg => toast(msg, 5000));

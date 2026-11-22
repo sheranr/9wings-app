@@ -121,7 +121,7 @@ function offerRow(a) {
     <div class="yr">${icon(bday ? 'cake' : 'heart')}${bday ? '' : L.ordinal(occ.years)}</div>
     <div class="grow"><div class="t">${esc(ev.names || customer?.name || '')}</div>
       <div class="s">${bday ? 'Birthday' : L.titleCase(L.occasionOf(ev.type))} · ${L.fmtShort(occ.date)} · <span class="${days <= 7 ? 'gold' : ''}">${L.daysLabel(days)}</span></div>
-      ${sent ? `<div class="s pos">${icon('check')} Offer sent ${L.fmtShort(sent.sentAt.slice(0, 10))} (${sent.discount}%) · <button class="link-btn tiny" style="padding:0" data-unsent="${sent.id}">Undo</button></div>` : ''}</div>
+      ${sent ? `<div class="s pos">${icon('check')} Offer sent ${L.fmtShort(sent.sentAt.slice(0, 10))} (${esc(sent.discount)}%) · <button class="link-btn tiny" style="padding:0" data-unsent="${sent.id}">Undo</button></div>` : ''}</div>
     ${sent ? '' : `<button class="btn wa sm" data-offer="${ev.id}">${icon('whatsapp')} Send</button>`}
   </div>`;
 }

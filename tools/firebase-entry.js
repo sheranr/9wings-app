@@ -9,5 +9,5 @@ export {
 export {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache,
   collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch, runTransaction,
-  serverTimestamp, connectFirestoreEmulator, getDocFromServer, waitForPendingWrites
+  serverTimestamp, connectFirestoreEmulator, getDocFromServer, waitForPendingWrites, terminate, clearIndexedDbPersistence
 } from 'firebase/firestore';

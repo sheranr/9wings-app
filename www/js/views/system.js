@@ -139,7 +139,7 @@ export async function accountView() {
   $('#nf').onsubmit = e => {
     e.preventDefault();
     const name = formData(e.target).name.trim();
-    if (D.mode === 'firebase') { D.put('members', { ...S.members.find(m => m.id === session.user.uid), name }); }
+    if (D.mode === 'firebase') { const m = S.members.find(x => x.id === session.user.uid) || {}; D.put('members', { ...m, id: session.user.uid, name }); }
     session.me = { ...session.me, name }; D.setActor({ uid: session.user?.uid, name });
     toast('Name saved');
   };
@@ -161,10 +161,10 @@ export async function dataView() {
     <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${counts.map(([k, n]) => `<div class="kpi"><span>${names[k]}</span><b>${n}</b></div>`).join('')}</div>
     ${eyebrow('Backup file')}
     <div class="card"><p class="small" style="margin:0 0 12px">Save a full copy of your data as one file. Keep it in Google Drive or email it to yourself once a month.</p>
-      <div class="btns" style="margin-top:0"><button class="btn secondary" id="exp">${icon('download')} Save backup</button>${isOwner() ? `<label class="btn secondary">${icon('upload')} Restore<input type="file" id="imp" accept=".json,application/json" hidden></label>` : ''}</div></div>
+      ${isOwner() ? `<div class="btns" style="margin-top:0"><button class="btn secondary" id="exp">${icon('download')} Save backup</button><label class="btn secondary">${icon('upload')} Restore<input type="file" id="imp" accept=".json,application/json" hidden></label></div><p class="tiny muted" style="margin:10px 0 0">The file contains all client details. Keep it private — don't send it over WhatsApp or leave it in Downloads.</p>` : '<p class="small muted" style="margin:0">Only the owner can save or restore full backups.</p>'}</div>
     ${isOwner() ? `${eyebrow('Earlier version of the app')}<div class="card"><p class="small" style="margin:0 0 12px">Copy data saved on this device before the online database was connected.</p><button class="btn secondary" id="legacy">${icon('upload')} Move data from this device</button></div>` : ''}
   </div>`;
-  $('#exp').onclick = async () => {
+  const ex = $('#exp'); if (ex) ex.onclick = async () => {
     const bytes = new TextEncoder().encode(JSON.stringify(D.exportAll(), null, 1));
     const r = await N.shareFile(bytes, `9wings-backup-${L.todayISO()}.json`, 'application/json', '9Wings backup');
     if (r === 'downloaded') toast('Backup downloaded');

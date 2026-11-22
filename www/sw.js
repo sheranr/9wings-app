@@ -1,5 +1,5 @@
 // Offline support for the web version: keeps the app files on the phone.
-const VERSION = '9wings-v2.1.0';
+const VERSION = '9wings-v2.2.0';
 const FILES = ["./", "index.html", "css/styles.css", "pdf-lib.min.js", "manifest.webmanifest", "vendor/firebase.js", "js/app.js", "js/data-device.js", "js/data-firebase.js", "js/data.js", "js/firebase-config.js", "js/icons.js", "js/logic.js", "js/native.js", "js/pdf.js", "js/report.js", "js/xlsx.js", "js/state.js", "js/ui.js", "js/updates.js", "js/views/auth.js", "js/views/bookings.js", "js/views/calendar.js", "js/views/clients.js", "js/views/home.js", "js/views/invoices.js", "js/views/money.js", "js/views/reports.js", "js/views/services.js", "js/views/system.js", "fonts/inter-latin-400-normal.woff2", "fonts/inter-latin-500-normal.woff2", "fonts/inter-latin-600-normal.woff2", "fonts/playfair-display-latin-500-normal.woff2", "fonts/playfair-display-latin-600-normal.woff2", "fonts/playfair-display-latin-700-normal.woff2", "img/logo-full.webp", "img/logo-header.webp", "img/logo-pdf.png", "img/icon-192.png", "img/icon-512.png"];
 
 self.addEventListener('install', e => {

@@ -144,7 +144,7 @@ export async function bookingForm(id, presetCustomer) {
       <form id="bf" class="form" autocomplete="off">${stepHtml()}
         <div class="form-actions">${step > 0 ? '<button type="button" class="btn secondary" id="prev">Back</button>' : ''}
           ${step < 3 ? `<button type="submit" class="btn">Continue</button>` : `<button type="submit" class="btn">${editing ? 'Save changes' : 'Save booking'}</button>`}</div>
-        ${editing && step === 3 ? `<button type="button" class="btn danger block" id="del" style="margin-top:4px">${icon('trash')} Delete booking</button>` : ''}
+        ${editing && step === 3 && isOwner() ? `<button type="button" class="btn danger block" id="del" style="margin-top:4px">${icon('trash')} Delete booking</button>` : ''}
       </form></div>`;
     $$('[data-back]').forEach(b => b.onclick = () => history.back());
     bind();
@@ -212,7 +212,7 @@ export async function bookingDetail(id) {
     if (i.createdAt) tl.push({ at: i.createdAt, ic: 'invoice', cls: 'gold', text: `${i.docType === 'quotation' ? 'Quotation' : 'Invoice'} ${esc(i.number || '')} created`, by: i.createdBy });
     (i.payments || []).forEach(p => tl.push({ at: p.at || p.date + 'T12:00:00', ic: p.type === 'Refund' ? 'undo' : 'arrowIn', cls: p.type === 'Refund' ? 'neg' : 'pos', text: `${esc(p.type || 'Payment')} ${L.money(p.amount)}${p.method ? ' · ' + esc(p.method) : ''}`, by: p.by }));
   });
-  offers.forEach(o => tl.push({ at: o.sentAt, ic: 'gift', cls: 'gold', text: `${o.year} offer sent (${o.discount}%)`, by: o.createdBy }));
+  offers.forEach(o => tl.push({ at: o.sentAt, ic: 'gift', cls: 'gold', text: `${esc(o.year)} offer sent (${esc(o.discount)}%)`, by: o.createdBy }));
   if (ev.updatedAt && ev.updatedAt !== ev.createdAt) tl.push({ at: ev.updatedAt, ic: 'edit', text: 'Booking updated', by: ev.updatedBy });
   tl.sort((a, b) => (b.at || '').localeCompare(a.at || ''));
 

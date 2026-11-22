@@ -40,7 +40,9 @@ You can also do this later: **More → Data & backup → Move data from this dev
 |---|---|---|
 | Clients, bookings, invoices, payments, expenses, services | ✓ | ✓ |
 | Delete invoices or payments | ✓ | – |
-| Business settings, team | ✓ | – |
+| Delete clients, bookings, expenses, services | ✓ | – |
+| Remove or change a recorded payment | ✓ | – |
+| Business settings, team, full backup file | ✓ | – |
 
 To stop someone signing in: **Team → Manage → untick "Can sign in"**.
 
@@ -71,6 +73,19 @@ Everything works without internet. Changes are saved on the device and sync auto
 ## Backups
 
 The online database is the main copy. For extra safety, once a month: **More → Data & backup → Save backup** and keep the file in Google Drive. **Restore** (owner only) merges a backup file back in — newer records in the app are kept.
+
+## Security
+
+- **Sign-in required.** Nothing can be read or changed without signing in, and only people added under **Team** (and switched on) can see business data. These rules are enforced by the database itself (`firestore.rules`), not only by the app.
+- **Owner-only actions:** deleting anything, removing or changing recorded payments, business settings, the team and full backup files.
+- **Turning someone off** blocks them immediately when online. (A phone that stays offline keeps showing what it had already downloaded until it reconnects.)
+- **Signing out** (More → My account → Sign out) removes the offline copy of the data from that phone. Ask staff to sign out before handing a phone to someone else.
+- **Protection inside the app:** text typed into the app is always shown as plain text, and the app only runs its own code (Content Security Policy), so a malicious entry can't run code on someone else's screen. Links only open web pages, phone, email or WhatsApp.
+- **Firebase console settings (recommended once):**
+  - **Authentication → Settings → Password policy:** require at least 8 characters.
+  - **Authentication → Settings → User actions:** keep *Email enumeration protection* on.
+  - **Firestore → Rules:** after any update to `firestore.rules`, paste and **Publish** again.
+- **Backups contain all client details** — keep backup and report files private.
 
 ## Settings (owner)
 

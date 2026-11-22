@@ -6,6 +6,7 @@ export const isNative = () => !!(Cap() && Cap().isNativePlatform && Cap().isNati
 const plugin = name => (isNative() && Cap().Plugins ? Cap().Plugins[name] : null);
 
 export function openExternal(url) {
+  if (!/^(https?:|tel:|mailto:|whatsapp:)/i.test(String(url || ''))) { console.warn('blocked link', url); return; }
   if (isNative()) {
     const Browser = plugin('AppLauncher');
     if (Browser && Browser.openUrl) { Browser.openUrl({ url }).catch(() => window.open(url, '_system')); return; }

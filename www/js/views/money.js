@@ -114,7 +114,7 @@ export async function expenseForm(id) {
     <label class="field"><span>Related booking <em>— optional</em></span><select name="eventId"><option value="">None</option>${evs.map(e => `<option value="${e.id}" ${e.id === x.eventId ? 'selected' : ''}>${esc(evLabel(e))} · ${L.fmtShort(e.date)} · ${esc(custName(e.customerId))}</option>`).join('')}</select></label>
     <label class="field"><span>Notes</span><textarea name="notes" rows="2">${esc(x.notes)}</textarea></label>
     <div class="form-actions"><button class="btn" type="submit">${id ? 'Save changes' : 'Save expense'}</button></div>
-    ${id ? `<button type="button" class="btn danger block" id="del">${icon('trash')} Delete expense</button>` : ''}
+    ${id && isOwner() ? `<button type="button" class="btn danger block" id="del">${icon('trash')} Delete expense</button>` : ''}
   </form></div>`;
   $('#xf').onsubmit = e => {
     e.preventDefault();
