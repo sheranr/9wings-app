@@ -123,5 +123,5 @@ export async function expenseForm(id) {
     D.put('expenses', { ...x, ...f, amount: Number(f.amount), description: f.description.trim(), supplier: f.supplier.trim() });
     toast('Expense saved'); go('#/expenses');
   };
-  const del = $('#del'); if (del) del.onclick = async () => { if (await confirmBox('Delete this expense?')) { D.remove('expenses', id); toast('Expense deleted'); go('#/expenses'); } };
+  const del = $('#del'); if (del) del.onclick = async () => { if (await confirmBox('Move this expense to the recycle bin? You can restore it within 30 days.', { ok: 'Delete' })) { D.trash('expenses', id); toast('Moved to the recycle bin — restore it from More → Recycle bin within 30 days.', 4500); go('#/expenses'); } };
 }

@@ -161,8 +161,8 @@ export async function bookingForm(id, presetCustomer) {
     const pv = $('#prev'); if (pv) pv.onclick = () => goStep(step - 1);
     $('#bf').onsubmit = e => { e.preventDefault(); if (step < 3) goStep(step + 1); else save(); };
     const del = $('#del'); if (del) del.onclick = async () => {
-      if (S.invoices.some(i => i.eventId === id)) { toast('This booking has invoices. Delete those first.', 4000); return; }
-      if (await confirmBox('Delete this booking? This can\'t be undone.')) { D.remove('events', id); toast('Booking deleted'); go('#/bookings'); }
+      if (D.allRaw('invoices').some(i => i.eventId === id && !i.deletedAt)) { toast('This booking has invoices. Delete those first.', 4000); return; }
+      if (await confirmBox('Move this booking to the recycle bin? You can restore it within 30 days.', { ok: 'Delete' })) { D.trash('events', id); toast('Moved to the recycle bin — restore it from More → Recycle bin within 30 days.', 4500); go('#/bookings'); }
     };
   };
   const save = async () => {
@@ -181,8 +181,8 @@ export async function bookingForm(id, presetCustomer) {
       if (!items.some(i => i.price) && ev.estimatedPrice) items.splice(0, items.length, { desc: `${ev.type} decoration${ev.names ? ' — ' + ev.names : ''}`, price: Number(ev.estimatedPrice), qty: 1 });
       if (!items.length) items.push({ desc: `${ev.type} decoration`, price: Number(ev.estimatedPrice) || 0, qty: 1 });
       const number = await D.nextNumber('invoice', L.todayISO());
-      D.put('invoices', { docType: 'invoice', number, date: L.todayISO(), customerId: ev.customerId, eventId: rec.id, items, discount: 0, notes: '',
-        payments: [{ amount: Number(adv.amount), date: L.todayISO(), method: adv.method, type: 'Advance', note: 'Advance', at: new Date().toISOString() }] });
+      D.put('invoices', L.stampIssued({ docType: 'invoice', number, date: L.todayISO(), customerId: ev.customerId, eventId: rec.id, items, discount: 0, notes: '',
+        payments: [{ amount: Number(adv.amount), date: L.todayISO(), method: adv.method, type: 'Advance', note: 'Advance', at: new Date().toISOString() }] }, S.settings, D.get('customers', ev.customerId)));
       msg += ` · Invoice ${number} created with the advance`;
     }
     toast(msg, 3500);

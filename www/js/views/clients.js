@@ -66,7 +66,7 @@ export async function clientForm(id) {
   };
   const del = $('#del'); if (del) del.onclick = async () => {
     if (S.events.some(e => e.customerId === id) || S.invoices.some(i => i.customerId === id)) { toast('This client has bookings or invoices. Delete those first.', 4000); return; }
-    if (await confirmBox(`Delete ${c.name}? This can't be undone.`)) { D.remove('customers', id); toast('Client deleted'); go('#/clients'); }
+    if (await confirmBox(`Move ${c.name} to the recycle bin? You can restore them within 30 days.`, { ok: 'Delete' })) { D.trash('customers', id); toast('Moved to the recycle bin — restore it from More → Recycle bin within 30 days.', 4500); go('#/clients'); }
   };
 }
 

@@ -3,6 +3,7 @@ import * as D from '../data.js';
 import * as L from '../logic.js';
 import * as N from '../native.js';
 import * as U from '../updates.js';
+import * as B from '../backup.js';
 import { S, session, isOwner } from '../state.js';
 import { $, $$, go, icon, esc, toast, sheet, closeSheet, badge, eyebrow, topbar, confirmBox, busy, formData, initials } from '../ui.js';
 
@@ -27,6 +28,7 @@ export async function moreView() {
     <div class="list">
       ${owner ? menuRow('#/settings', 'settings', 'Settings', 'Business details, invoice, alerts, messages') : ''}
       ${owner ? menuRow('#/team', 'shield', 'Team', D.mode === 'firebase' ? 'Staff logins and access' : 'Needs the online database') : ''}
+      ${owner ? menuRow('#/bin', 'trash', 'Recycle bin', (() => { const n = D.binItems().length; return n ? n + ' deleted item' + (n > 1 ? 's' : '') + ' — restore within 30 days' : 'Restore deleted records'; })()) : ''}
       ${menuRow('#/data', 'cloud', 'Data & backup', D.mode === 'firebase' ? 'Online database · backup file' : 'Saved on this device · backup file')}
       ${menuRow('#/updates', 'bell', 'Updates & messages', U.state.updateAvailable ? 'New version ' + esc(U.state.latest?.version || '') + ' available' : 'App version and news', upd ? ` <span class="badge b-overdue nodot">${upd}</span>` : '')}
       ${menuRow('#/account', 'user', 'My account', D.mode === 'firebase' ? 'Password and sign out' : 'Profile')}
@@ -159,16 +161,43 @@ export async function dataView() {
       : '<b>Saved on this device only.</b> Connect the online database to share data between devices and staff.'}</div></div>
     ${eyebrow('Records')}
     <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${counts.map(([k, n]) => `<div class="kpi"><span>${names[k]}</span><b>${n}</b></div>`).join('')}</div>
+    ${isOwner() ? `${eyebrow('Automatic backups')}
+    <div class="card"><p class="small" style="margin:0 0 10px">Every week a full copy of the data is kept on this device (last 8 weeks)${N.isNative() ? ', and saved as a file in <b>Documents/9Wings Backups</b>' : ''}. Restoring brings back anything missing — it never overwrites newer changes.</p>
+      <p class="small" style="margin:0 0 12px">${(() => { const l = B.lastAuto(); return l.at ? `Last backup: <b>${L.relTime(l.at)}</b>${l.where ? ' · ' + esc(l.where) : ''}` : 'No automatic backup yet.'; })()}</p>
+      <div id="snaps"><div class="skel" style="height:56px"></div></div>
+      <button class="btn secondary block" id="backupNow" style="margin-top:12px">${icon('sync')} Back up now</button></div>` : ''}
     ${eyebrow('Backup file')}
-    <div class="card"><p class="small" style="margin:0 0 12px">Save a full copy of your data as one file. Keep it in Google Drive or email it to yourself once a month.</p>
+    <div class="card"><p class="small" style="margin:0 0 12px">Save a full copy as one file and keep it in Google Drive, so there's a copy off the phone. Do this once a month — the app reminds you.</p>
       ${isOwner() ? `<div class="btns" style="margin-top:0"><button class="btn secondary" id="exp">${icon('download')} Save backup</button><label class="btn secondary">${icon('upload')} Restore<input type="file" id="imp" accept=".json,application/json" hidden></label></div><p class="tiny muted" style="margin:10px 0 0">The file contains all client details. Keep it private — don't send it over WhatsApp or leave it in Downloads.</p>` : '<p class="small muted" style="margin:0">Only the owner can save or restore full backups.</p>'}</div>
     ${isOwner() ? `${eyebrow('Earlier version of the app')}<div class="card"><p class="small" style="margin:0 0 12px">Copy data saved on this device before the online database was connected.</p><button class="btn secondary" id="legacy">${icon('upload')} Move data from this device</button></div>` : ''}
   </div>`;
   const ex = $('#exp'); if (ex) ex.onclick = async () => {
     const bytes = new TextEncoder().encode(JSON.stringify(D.exportAll(), null, 1));
     const r = await N.shareFile(bytes, `9wings-backup-${L.todayISO()}.json`, 'application/json', '9Wings backup');
+    if (r !== 'cancelled') B.markDriveCopy();
     if (r === 'downloaded') toast('Backup downloaded');
   };
+  const snaps = $('#snaps');
+  if (snaps) {
+    const list = await B.listSnapshots();
+    snaps.innerHTML = list.length ? `<div class="list">${list.map(sn => `<div class="row static"><span class="tile-ic">${icon('history')}</span>
+      <div class="grow"><div class="t">${L.fmtNice(sn.at.slice(0, 10))} <span class="muted small">${new Date(sn.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
+        <div class="s">${sn.counts.clients} clients · ${sn.counts.bookings} bookings · ${sn.counts.invoices} invoices</div></div>
+      <div style="display:flex;gap:6px;flex:none"><button class="btn secondary sm" data-snap-restore="${esc(sn.id)}">Restore</button><button class="x-btn" style="height:36px;width:36px" data-snap-save="${esc(sn.id)}" aria-label="Save a copy">${icon('download', 'sm')}</button></div></div>`).join('')}</div>`
+      : '<p class="small muted" style="margin:0">The first automatic backup is made when you sign in as owner.</p>';
+    $$('[data-snap-restore]').forEach(b => b.onclick = async () => {
+      const data = await B.readSnapshot(b.dataset.snapRestore);
+      if (!data) return toast('Backup not found');
+      if (!(await confirmBox(`Restore the backup from ${L.fmtNice(b.dataset.snapRestore.slice(0, 10))}? Anything missing is brought back; newer changes are kept.`, { ok: 'Restore', danger: false, title: 'Restore backup' }))) return;
+      toast(`Restored ${D.importAll(data)} records ✓`, 4000);
+    });
+    $$('[data-snap-save]').forEach(b => b.onclick = async () => {
+      const data = await B.readSnapshot(b.dataset.snapSave);
+      const r = await N.shareFile(new TextEncoder().encode(JSON.stringify(data)), `9wings-backup-${b.dataset.snapSave.slice(0, 10)}.json`, 'application/json', '9Wings backup');
+      if (r !== 'cancelled') B.markDriveCopy();
+    });
+  }
+  const bn = $('#backupNow'); if (bn) bn.onclick = e => busy(e.currentTarget, async () => { const r = await B.backupNow(); toast(`Backup saved${r.where ? ' · ' + r.where : ''}`); dataView(); }, 'Backing up…');
   const imp = $('#imp'); if (imp) imp.onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
     try {

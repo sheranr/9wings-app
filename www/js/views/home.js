@@ -3,6 +3,7 @@ import * as D from '../data.js';
 import * as L from '../logic.js';
 import * as N from '../native.js';
 import * as U from '../updates.js';
+import * as B from '../backup.js';
 import { S, session, isOwner, custName, evTitle, bookingPayment } from '../state.js';
 import { $, $$, icon, esc, toast, sheet, closeSheet, badge, empty, eyebrow, datebox, topbar, confirmBox } from '../ui.js';
 
@@ -59,6 +60,7 @@ export async function homeView() {
   <div class="page wide">
     <div class="greet"><div><h2>${greeting()}${first && first !== 'Owner' ? ', ' + esc(first) : ''}</h2><p>${icon('calendar', 'sm')} ${L.DAYS[d0.getDay()]}, ${L.fmtNice(t)}</p></div></div>
     ${legacy}
+    ${isOwner() && B.driveDue() ? `<div class="notice-bar" id="driveBar">${icon('cloud')}<div class="grow"><b>Monthly backup</b><div class="small muted">Save a copy of your data to Google Drive, so it's safe off the phone.</div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="btn sm" id="driveSave">Save</button><button class="link-btn tiny" id="driveLater" style="padding:0">Later</button></div></div>` : ''}
     ${U.state.updateAvailable && U.state.latest ? `<div class="notice-bar ${U.state.forced ? 'neg' : ''}">${icon('download')}<div class="grow"><b>Update available · ${esc(U.state.latest.version)}</b><div class="small muted">${U.state.forced ? 'This update is required.' : 'Get the newest version of the app.'}</div></div><button class="btn sm" data-update>Update</button></div>` : ''}
     <div class="dash">
       <div>
@@ -110,6 +112,11 @@ export async function homeView() {
   $$('[data-offer]').forEach(b => b.onclick = e => { e.preventDefault(); offerSheet(b.dataset.offer); });
   $$('[data-unsent]').forEach(b => b.onclick = async e => { e.preventDefault(); D.remove('offers', b.dataset.unsent); toast('Marked as not sent'); });
   $$('[data-update]').forEach(b => b.onclick = () => U.startDownload(U.state.latest?.url));
+  const ds = $('#driveSave'); if (ds) ds.onclick = async () => {
+    const r = await N.shareFile(new TextEncoder().encode(JSON.stringify(D.exportAll())), `9wings-backup-${L.todayISO()}.json`, 'application/json', '9Wings backup');
+    if (r !== 'cancelled') { B.markDriveCopy(); $('#driveBar').remove(); toast(r === 'downloaded' ? 'Backup downloaded — upload it to Google Drive' : 'Backup ready'); }
+  };
+  const dl = $('#driveLater'); if (dl) dl.onclick = () => { B.snoozeDrive(7); $('#driveBar').remove(); };
   const mig = $('#migrate'); if (mig) mig.onclick = () => migrate(mig);
   const skip = $('#migrateSkip'); if (skip) skip.onclick = () => { try { localStorage.setItem(D.LEGACY_FLAG, '1'); } catch (e) { /* ignore */ } $('#legacyBar').remove(); };
 }

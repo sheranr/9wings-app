@@ -15,7 +15,10 @@ async function loadAssets() {
 // The built-in PDF fonts cover Latin characters only; anything else (e.g. emoji, Sinhala) is dropped.
 const clean = s => String(s ?? '').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—−]/g, '-').replace(/\t/g, ' ').replace(/[^\n\x20-\x7E\xA0-\xFF\u2022]/g, '');
 
-export async function buildInvoicePdf(inv, customer, ev, settings, { due } = {}) {
+export async function buildInvoicePdf(inv, customer, ev, settingsNow, { due } = {}) {
+  // Business and client details as they were when the invoice was issued (falls back to the current ones).
+  const settings = { ...settingsNow, ...(inv.issuer || {}) };
+  if (inv.billTo && inv.billTo.name) customer = { ...(customer || {}), name: inv.billTo.name, address: inv.billTo.address, phone: inv.billTo.phone };
   const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
   const col = a => rgb(a[0] / 255, a[1] / 255, a[2] / 255);
   const quote = inv.docType === 'quotation';

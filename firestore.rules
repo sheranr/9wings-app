@@ -6,7 +6,7 @@ rules_version = '2';
 //  - Nothing is readable or writable without signing in, except the one-time "owner exists" check.
 //  - Only people added under Team (and switched on) can use the data.
 //  - Staff: add and edit clients, bookings, invoices, payments, expenses, services.
-//  - Owner only: delete anything, remove or change recorded payments, business settings, team.
+//  - Owner only: delete anything (recycle bin and permanent), remove or change recorded payments, business settings, team.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
@@ -20,6 +20,10 @@ service cloud.firestore {
     // A record's own "id" field, when present, must match its document id.
     function idMatches(id) { return !('id' in request.resource.data) || request.resource.data.id == id; }
     function sane(id) { return validId(id) && idMatches(id) && request.resource.data.keys().size() <= 60; }
+    // Recycle bin: only the owner may move records into or out of the bin (deletedAt).
+    function binUnchanged() {
+      return request.resource.data.get('deletedAt', null) == (resource == null ? null : resource.data.get('deletedAt', null));
+    }
 
     // Who owns the business. Anyone may check whether it exists (so the app knows to show "set up").
     // Created once, by the first account, together with that account's team record. Never changed from the app.
@@ -73,16 +77,17 @@ service cloud.firestore {
     // Staff can add payments but cannot remove or change payments already recorded.
     match /invoices/{id} {
       allow read: if isMember();
-      allow create: if isMember() && sane(id);
+      allow create: if isMember() && sane(id) && (isOwner() || binUnchanged());
       allow update: if isMember() && sane(id) && (isOwner()
-        || request.resource.data.get('payments', []).hasAll(resource.data.get('payments', [])));
+        || (binUnchanged() && request.resource.data.get('payments', []).hasAll(resource.data.get('payments', []))));
       allow delete: if isOwner();
     }
 
     // Other business records: staff add and edit, only the owner deletes.
     match /{coll}/{id} {
       allow read: if isMember() && coll in ['customers', 'events', 'items', 'packages', 'expenses', 'offers'];
-      allow create, update: if isMember() && sane(id) && coll in ['customers', 'events', 'items', 'packages', 'expenses', 'offers'];
+      allow create, update: if isMember() && sane(id) && coll in ['customers', 'events', 'items', 'packages', 'expenses', 'offers']
+        && (isOwner() || binUnchanged());
       // Anyone can undo a "sent" mark on an offer; everything else only the owner deletes.
       allow delete: if (isOwner() && coll in ['customers', 'events', 'items', 'packages', 'expenses', 'offers'])
         || (isMember() && coll == 'offers');

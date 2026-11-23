@@ -70,9 +70,13 @@ To stop someone signing in: **Team → Manage → untick "Can sign in"**.
 
 Everything works without internet. Changes are saved on the device and sync automatically when the connection returns. Invoice numbers are taken from the shared counter when online; offline, the next free number on that device is used.
 
-## Backups
+## Backups & recycle bin
 
-The online database is the main copy. For extra safety, once a month: **More → Data & backup → Save backup** and keep the file in Google Drive. **Restore** (owner only) merges a backup file back in — newer records in the app are kept.
+- **Online database:** every invoice, booking and payment is stored in Firebase, so a lost phone loses nothing — sign in on another device.
+- **Recycle bin (owner):** deleted invoices, bookings, clients, expenses and services go to **More → Recycle bin** for 30 days and can be restored with one tap (restoring an invoice also brings back its client and booking). After 30 days they're removed for good.
+- **Automatic weekly backups (owner):** the owner's device keeps a full copy every week (last 8). On Android it's also saved as a file in **Documents/9Wings Backups**. See and restore them under **More → Data & backup → Automatic backups**. Restoring brings back anything missing and never overwrites newer changes.
+- **Monthly Google Drive copy:** the dashboard reminds the owner once a month — tap **Save** and choose Google Drive.
+- **Invoices keep their issued details:** each invoice stores the business details (bank, terms, phones) and client details used when it was issued, so a re-shared PDF always matches what the client received. **Use current** on an invoice updates it to today's details.
 
 ## Security
 

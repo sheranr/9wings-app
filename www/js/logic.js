@@ -181,3 +181,17 @@ export function finance({ invoices, expenses }, prefix) {
   const spent = (expenses || []).filter(e => (e.date || '').startsWith(prefix)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
   return { received, spent, profit: received - spent };
 }
+
+// ---------- details frozen on an invoice when it is issued ----------
+// So a re-shared PDF always shows what the client originally received, even if settings or the client's address change later.
+export const ISSUER_KEYS = ['businessName', 'tagline', 'slogan', 'phones', 'email', 'address', 'terms', 'paymentMethod', 'invoiceThanks'];
+export const issuerFrom = settings => Object.fromEntries(ISSUER_KEYS.map(k => [k, settings?.[k] ?? '']));
+export const billToFrom = c => ({ customerId: c?.id || '', name: c?.name || '', address: c?.address || '', phone: c?.phone || '' });
+export const issuerDiffers = (inv, settings) => !!inv.issuer && ISSUER_KEYS.some(k => (inv.issuer[k] ?? '') !== (settings?.[k] ?? ''));
+// Add the frozen details to an invoice that doesn't have them yet (or whose client was changed).
+export function stampIssued(inv, settings, customer) {
+  const out = { ...inv };
+  if (!out.issuer) out.issuer = issuerFrom(settings);
+  if (!out.billTo || out.billTo.customerId !== (customer?.id || '')) out.billTo = billToFrom(customer);
+  return out;
+}

@@ -66,6 +66,7 @@ export async function invoiceDetail(id) {
       ${c?.phone ? `<button class="wa" id="remind">${icon('whatsapp')}${quote || t.balance <= 0.009 ? 'WhatsApp' : 'Remind'}</button>` : '<span></span>'}
     </div>
     ${quote ? `<div class="notice-bar lav">${icon('invoice')}<div class="grow small">Client accepted? Turn this quotation into an invoice.</div><button class="btn sm" id="convert">Convert</button></div>` : ''}
+    ${frozenNote(inv, c)}
 
     <div class="split-view"><div>
       ${eyebrow('Items')}
@@ -95,6 +96,7 @@ export async function invoiceDetail(id) {
     </div></div>
   </div>`;
 
+  const fz = $('#refreeze'); if (fz) fz.onclick = () => { D.put('invoices', { ...inv, issuer: L.issuerFrom(S.settings), billTo: L.billToFrom(c) }); toast('The PDF now uses your current business and client details'); };
   const pdf = async () => {
     const doc = await buildInvoicePdf(inv, c, ev, S.settings, { due });
     return { bytes: await doc.save(), name: pdfFileName(inv, c) };
@@ -120,10 +122,20 @@ export async function invoiceDetail(id) {
   const cv = $('#convert'); if (cv) cv.onclick = e => busy(e.currentTarget, async () => {
     const number = await D.nextNumber('invoice', L.todayISO());
     const { id: _i, createdAt, createdBy, updatedAt, updatedBy, ...rest } = structuredClone(inv);
-    const rec = D.put('invoices', { ...rest, docType: 'invoice', number, date: L.todayISO(), payments: [], fromQuotation: inv.number });
+    const { issuer, billTo, ...body } = rest;
+    const rec = D.put('invoices', L.stampIssued({ ...body, docType: 'invoice', number, date: L.todayISO(), payments: [], fromQuotation: inv.number }, S.settings, S.cust[inv.customerId]));
     toast('Invoice ' + number + ' created'); go('#/invoice/' + rec.id);
   });
-  const del = $('#del'); if (del) del.onclick = async () => { if (await confirmBox(`Delete ${inv.number}? This can't be undone.`)) { D.remove('invoices', id); toast('Deleted'); go('#/invoices'); } };
+  const del = $('#del'); if (del) del.onclick = async () => { if (await confirmBox(`Move ${inv.number} to the recycle bin? You can restore it within 30 days.`, { ok: 'Delete' })) { D.trash('invoices', id); toast('Moved to the recycle bin — restore it from More → Recycle bin within 30 days.', 4500); go('#/invoices'); } };
+}
+
+// Shown when settings or the client's details changed after the invoice was issued.
+function frozenNote(inv, c) {
+  const bizChanged = L.issuerDiffers(inv, S.settings);
+  const b = inv.billTo;
+  const clientChanged = !!(b && c && (b.name !== (c.name || '') || b.address !== (c.address || '') || b.phone !== (c.phone || '')));
+  if (!bizChanged && !clientChanged) return '';
+  return `<div class="notice-bar lav">${icon('lock')}<div class="grow small">The PDF keeps the ${bizChanged && clientChanged ? 'business and client' : bizChanged ? 'business' : 'client'} details from when this was issued${bizChanged ? ' (bank details, terms, phones)' : ''}.</div>${isOwner() ? '<button class="btn secondary sm" id="refreeze">Use current</button>' : ''}</div>`;
 }
 
 export function paymentSheet(inv, onDone) {
@@ -236,7 +248,7 @@ export async function invoiceForm(id, presetEvent) {
       inv.discount = Number(inv.discount) || 0;
       const btn = e.submitter || $('#inf button[type=submit]'); btn.disabled = true;
       if (!inv.number) inv.number = await D.nextNumber(inv.docType, inv.date);
-      const rec = D.put('invoices', inv);
+      const rec = D.put('invoices', L.stampIssued(inv, S.settings, S.cust[inv.customerId]));
       toast('Saved ' + rec.number);
       history.replaceState(null, '', '#/invoice/' + rec.id); window.dispatchEvent(new HashChangeEvent('hashchange'));
     };

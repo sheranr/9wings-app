@@ -50,7 +50,7 @@ function serviceSheet(item) {
       D.put('items', { ...it, name: f.name.trim(), category: f.category, price: Number(f.price) || 0, description: f.description.trim(), active: !!f.active });
       closeSheet(); toast('Service saved');
     };
-    const del = $('#del', sh); if (del) del.onclick = async () => { if (await confirmBox(`Delete "${it.name}"? Existing invoices keep their items.`)) { D.remove('items', it.id); toast('Service deleted'); } };
+    const del = $('#del', sh); if (del) del.onclick = async () => { if (await confirmBox(`Delete "${it.name}"? Existing invoices keep their items.`)) { D.trash('items', it.id); toast('Service moved to the recycle bin'); } };
   });
 }
 
@@ -75,6 +75,6 @@ function packageSheet(pkg) {
       D.put('packages', { ...p, name: f.get('name').trim(), price: Number(f.get('price')) || 0, description: (f.get('description') || '').trim(), includes: f.getAll('inc') });
       closeSheet(); toast('Package saved');
     };
-    const del = $('#del', sh); if (del) del.onclick = async () => { if (await confirmBox(`Delete "${p.name}"?`)) { D.remove('packages', p.id); toast('Package deleted'); } };
+    const del = $('#del', sh); if (del) del.onclick = async () => { if (await confirmBox(`Delete "${p.name}"?`)) { D.trash('packages', p.id); toast('Package moved to the recycle bin'); } };
   });
 }

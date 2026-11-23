@@ -25,8 +25,13 @@ function emit(store) {
 }
 
 // ---------- reads ----------
-export const all = store => [...cache[store].values()];
-export const get = (store, id) => cache[store].get(id) || null;
+// Records in the recycle bin (deletedAt set) are hidden everywhere except the bin itself.
+export const TRASHABLE = ['customers', 'events', 'invoices', 'items', 'packages', 'expenses'];
+export const BIN_DAYS = 30;
+export const all = store => [...cache[store].values()].filter(r => !r.deletedAt);
+export const allRaw = store => [...cache[store].values()];
+export const get = (store, id) => { const r = cache[store].get(id); return r && !r.deletedAt ? r : null; };
+export const getAny = (store, id) => cache[store].get(id) || null;
 
 // ---------- writes ----------
 const clean = obj => JSON.parse(JSON.stringify(obj)); // drops undefined values (Firestore rejects them)
@@ -47,6 +52,31 @@ export function remove(store, id) {
   emit(store);
   adapter.remove(store, id).catch(e => saveFailed(e, store));
 }
+// ---------- recycle bin ----------
+export function trash(store, id) {
+  const r = getAny(store, id);
+  if (!r) return;
+  put(store, { ...r, deletedAt: new Date().toISOString(), deletedBy: actor.name || '' });
+}
+export function restore(store, id) {
+  const r = getAny(store, id);
+  if (!r) return;
+  const { deletedAt, deletedBy, ...rest } = r;
+  put(store, rest);
+}
+export function binItems() {
+  const out = [];
+  for (const s of TRASHABLE) for (const r of cache[s].values()) if (r.deletedAt) out.push({ store: s, rec: r });
+  return out.sort((a, b) => b.rec.deletedAt.localeCompare(a.rec.deletedAt));
+}
+// Owner device: permanently remove bin items older than BIN_DAYS.
+export function purgeBin(days = BIN_DAYS) {
+  const cut = new Date(Date.now() - days * 86400000).toISOString();
+  let n = 0;
+  for (const { store, rec } of binItems()) if (rec.deletedAt < cut) { remove(store, rec.id); n++; }
+  return n;
+}
+
 let failHandler = () => {};
 export const onSaveError = fn => { failHandler = fn; };
 function saveFailed(e, store) {
@@ -84,7 +114,7 @@ export async function nextNumber(docType, date) {
   const s = getSettings();
   const year = (date || new Date().toISOString()).slice(0, 4);
   const prefix = `${s.numberPrefix}-${docType === 'quotation' ? 'Q-' : ''}${year}-`;
-  const used = all('invoices').map(i => i.number).filter(n => n?.startsWith(prefix)).map(n => parseInt(n.slice(prefix.length), 10) || 0);
+  const used = allRaw('invoices').map(i => i.number).filter(n => n?.startsWith(prefix)).map(n => parseInt(n.slice(prefix.length), 10) || 0);
   const localNext = Math.max(0, ...used) + 1;
   let n = localNext;
   try { n = await adapter.counter(`${docType}-${year}`, localNext); } catch (e) { /* offline: use local number */ }
@@ -141,7 +171,7 @@ function seedServices() {
 // ---------- backup file ----------
 export function exportAll() {
   const out = { app: '9wings', version: 2, exportedAt: new Date().toISOString() };
-  for (const s of BACKUP_STORES) out[s] = all(s);
+  for (const s of BACKUP_STORES) out[s] = allRaw(s); // includes the recycle bin
   return out;
 }
 // Merges records: a record is replaced only if the incoming copy is newer.
@@ -153,7 +183,7 @@ export function importAll(data) {
     if (!Array.isArray(list)) continue;
     for (const r of list) {
       if (!r || !r.id || !SAFE_ID.test(String(r.id))) continue;
-      const cur = get(s, r.id);
+      const cur = getAny(s, r.id);
       if (s === 'settings') {
         let { sheetUrl, sheetKey, lastSync, counters, ...rest } = r;
         // From the earlier app version keep the business details, not its old name and wording.

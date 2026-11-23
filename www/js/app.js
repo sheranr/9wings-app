@@ -2,6 +2,8 @@
 import * as D from './data.js';
 import * as N from './native.js';
 import * as U from './updates.js';
+import * as L from './logic.js';
+import * as B from './backup.js';
 import { S, session, snapshot, isOwner } from './state.js';
 import { $, $$, go, icon, esc, toast, sheetOpen, closeSheet, initials } from './ui.js';
 import { authView, noAccessView } from './views/auth.js';
@@ -13,6 +15,7 @@ import { invoicesView, invoiceForm, invoiceDetail } from './views/invoices.js';
 import { paymentsView, expensesView, expenseForm } from './views/money.js';
 import { servicesView } from './views/services.js';
 import { reportsView } from './views/reports.js';
+import { binView } from './views/bin.js';
 import { moreView, settingsView, teamView, dataView, updatesView, accountView, updatesUI } from './views/system.js';
 
 const ID = '([^/]+)';
@@ -41,6 +44,7 @@ const routes = [
   [/^#\/settings$/, settingsView, 'settings', false],
   [/^#\/team$/, teamView, 'team'],
   [/^#\/data$/, dataView, 'data'],
+  [/^#\/bin$/, binView, 'bin'],
   [/^#\/updates$/, updatesView, 'updates'],
   [/^#\/account$/, accountView, 'account', false],
 ];
@@ -51,7 +55,7 @@ const TABS = [['home', '#/home', 'home', 'Home'], ['calendar', '#/calendar', 'ca
 const SIDE = [
   [null, [['home', '#/home', 'dashboard', 'Dashboard'], ['calendar', '#/calendar', 'calendar', 'Calendar'], ['bookings', '#/bookings', 'clipboard', 'Bookings'], ['clients', '#/clients', 'users', 'Clients']]],
   ['Finance', [['invoices', '#/invoices', 'invoice', 'Invoices'], ['payments', '#/payments', 'wallet', 'Payments'], ['expenses', '#/expenses', 'receipt', 'Expenses'], ['reports', '#/reports', 'chart', 'Reports']]],
-  ['Business', [['services', '#/services', 'flower', 'Services & packages'], ['team', '#/team', 'shield', 'Team', true], ['settings', '#/settings', 'settings', 'Settings', true], ['updates', '#/updates', 'bell', 'Updates & messages']]],
+  ['Business', [['services', '#/services', 'flower', 'Services & packages'], ['team', '#/team', 'shield', 'Team', true], ['settings', '#/settings', 'settings', 'Settings', true], ['bin', '#/bin', 'trash', 'Recycle bin', true], ['updates', '#/updates', 'bell', 'Updates & messages']]],
 ];
 
 function shell() {
@@ -138,6 +142,15 @@ function boot(msg = '') {
 }
 
 let opened = '';
+// Owner device, once per sign-in: empty old bin items, freeze details on invoices issued before this feature, weekly backup.
+async function ownerHousekeeping() {
+  try {
+    D.purgeBin();
+    const s = D.getSettings();
+    for (const inv of D.allRaw('invoices')) if (!inv.issuer) D.put('invoices', L.stampIssued(inv, s, D.getAny('customers', inv.customerId)), { keepStamp: true });
+    await B.autoBackup();
+  } catch (e) { console.warn('housekeeping', e); }
+}
 async function signedIn(user) {
   const A = D.getAdapter();
   let me = null;
@@ -153,6 +166,7 @@ async function signedIn(user) {
     boot('Loading your business…');
     await D.openBusiness({ owner: me.role === 'owner' });
     opened = user.uid;
+    if (me.role === 'owner') ownerHousekeeping();
   }
   snapshot();
   if (!location.hash || location.hash === '#/' || location.hash === '#/login') history.replaceState(null, '', '#/home');
