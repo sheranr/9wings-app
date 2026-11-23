@@ -105,6 +105,9 @@ export async function invoiceDetail(id) {
   $('#view').onclick = e => busy(e.currentTarget, async () => {
     const p = await pdf();
     if (N.isNative()) { await N.shareFile(p.bytes, p.name, 'application/pdf', 'Open PDF with…'); return; }
+    // Phones/tablets: save a properly named file instead of a temporary browser tab
+    // (sharing from that tab sends "Unknown.pdf" plus a meaningless blob: link).
+    if (window.matchMedia('(pointer: coarse)').matches) { await N.saveFile(p.bytes, p.name, 'application/pdf'); toast('Saved ' + p.name + ' — open it from Downloads', 4000); return; }
     const url = URL.createObjectURL(new Blob([p.bytes], { type: 'application/pdf' }));
     if (!window.open(url, '_blank')) location.href = url;
   }, 'Preparing…');
