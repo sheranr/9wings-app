@@ -132,7 +132,7 @@
         <h1>Every booking, invoice and <em>anniversary</em> — in one app.</h1>
         <p class="lead">Record customers and events, send elegant PDF invoices to WhatsApp, and never miss a chance to offer an anniversary or birthday celebration.</p>
         <div class="btns">
-          <a class="btn primary" id="apkBtn" href="https://github.com/sheranr/9wings-app/releases/latest/download/9Wings-Event.apk">
+          <a class="btn primary" id="apkBtn" href="9Wings.apk" download="9Wings.apk">
             <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
             <span class="txt">Download for Android<small id="apkSmall">APK file</small></span>
           </a>
@@ -193,7 +193,7 @@
 
     <div class="panel" id="p-iphone">
       <ol class="steps">
-        <li><div><b>Open the web app in Safari</b><span><a href="../" style="color:var(--gold);font-weight:600">sheranr.github.io/9wings-app</a></span></div></li>
+        <li><div><b>Open the web app in Safari</b><span><a href="../" style="color:var(--gold);font-weight:600">Open the 9Wings web app →</a></span></div></li>
         <li><div><b>Tap the Share button</b><span>The square with an arrow, at the bottom of Safari.</span></div></li>
         <li><div><b>Choose "Add to Home Screen"</b><span>9Wings now opens like a normal app and works offline.</span></div></li>
         <li><div><b>Sign in</b><span>Use the email and password the business owner gave you. You can change your password later under More → My account.</span></div></li>
@@ -203,7 +203,7 @@
 
     <div class="panel" id="p-computer">
       <ol class="steps">
-        <li><div><b>Open the web app in Chrome or Edge</b><span><a href="../" style="color:var(--gold);font-weight:600">sheranr.github.io/9wings-app</a></span></div></li>
+        <li><div><b>Open the web app in Chrome or Edge</b><span><a href="../" style="color:var(--gold);font-weight:600">Open the 9Wings web app →</a></span></div></li>
         <li><div><b>Optional: install it</b><span>Click the install icon at the right end of the address bar to open it in its own window.</span></div></li>
         <li><div><b>Sign in</b><span>Use the email and password the business owner gave you. You can change your password later under More → My account.</span></div></li>
       </ol>
@@ -228,7 +228,6 @@
       <div class="when" id="relWhen"></div>
       <div class="body" id="relBody">Customers, bookings, quotations and invoices, built-in calendar, anniversary and birthday offers, payments, expenses, reports and a secure online database.</div>
     </div>
-    <p class="older"><a href="https://github.com/sheranr/9wings-app/releases" style="color:var(--gold);font-weight:600;text-decoration:none">All versions →</a></p>
   </section>
 </main>
 
@@ -266,23 +265,19 @@
     this.textContent = 'Copied';
   };
 
-  // Latest release details from GitHub
+  // Latest version details (published with the website)
   function mb(n) { return (n / 1048576).toFixed(1) + ' MB'; }
   function date(s) { return new Date(s).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }); }
-  fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+  fetch('latest.json?t=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(function (rel) {
-      var apk = (rel.assets || []).filter(function (a) { return /\.apk$/i.test(a.name); })[0];
-      var v = (rel.tag_name || '').replace(/^v/, '');
-      if (apk && !isIOS) {
-        document.getElementById('apkBtn').href = apk.browser_download_url;
-        document.getElementById('apkSmall').textContent = 'Version ' + v + ' · ' + mb(apk.size);
-      }
-      document.getElementById('meta').innerHTML = 'Version <b>' + v + '</b> · updated ' + date(rel.published_at);
-      document.getElementById('relName').textContent = rel.name || ('Version ' + v);
-      document.getElementById('relWhen').textContent = date(rel.published_at);
-      var body = (rel.body || '').replace(/\*\*/g, '').trim();
-      if (body && !/^Download/i.test(body)) document.getElementById('relBody').textContent = body;
+      var v = rel.version;
+      if (!isIOS) document.getElementById('apkSmall').textContent = 'Version ' + v + (rel.size ? ' · ' + mb(rel.size) : '');
+      document.getElementById('meta').innerHTML = 'Version <b>' + v + '</b> · updated ' + date(rel.date);
+      document.getElementById('relName').textContent = 'Version ' + v;
+      document.getElementById('relWhen').textContent = date(rel.date);
+      var body = String(rel.notes || '').trim();
+      if (body && body !== 'Improvements and fixes.') document.getElementById('relBody').textContent = body;
     })
     .catch(function () { document.getElementById('meta').textContent = 'Always the latest version'; });
 })();

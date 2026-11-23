@@ -39,14 +39,20 @@ async function getJSON(url) {
   return res.json();
 }
 
-// Latest release: { version, notes, url, date, size }
+// Latest version: { version, notes, url, date, size }.
+// Read from the website's own version file; the app file is served from the website too.
+export const LATEST_URL = 'https://sheranr.github.io/9wings-app/download/latest.json';
 export async function latestRelease() {
+  try {
+    const j = await getJSON(LATEST_URL + '?t=' + Date.now());
+    if (j && j.version && j.url) return { version: String(j.version), notes: String(j.notes || '').trim(), url: j.url, date: j.date, size: j.size || 0 };
+  } catch (e) { /* fall back to the release list */ }
   const rel = await getJSON(RELEASE_API);
   const apk = (rel.assets || []).find(a => /\.apk$/i.test(a.name));
   return {
     version: String(rel.tag_name || '').replace(/^v/i, ''),
     notes: String(rel.body || '').replace(/\*\*/g, '').trim(),
-    url: apk ? apk.browser_download_url : `https://github.com/${REPO}/releases/latest/download/9Wings-Event.apk`,
+    url: apk ? apk.browser_download_url : DOWNLOAD_PAGE,
     date: rel.published_at,
     size: apk ? apk.size : 0
   };

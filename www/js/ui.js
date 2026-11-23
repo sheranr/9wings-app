@@ -87,7 +87,13 @@ export function friendlyError(e) {
   if (c.includes('invalid-email')) return 'Please enter a valid email address.';
   if (c.includes('network-request-failed')) return 'No internet connection. Please try again when online.';
   if (c.includes('permission-denied')) return 'You don\'t have permission to do that.';
-  return e?.message || String(e);
+  if (c.includes('unavailable') || c.includes('deadline-exceeded')) return 'Can\'t reach the server right now. Please try again in a moment.';
+  if (c.includes('requires-recent-login')) return 'For your security, please sign out and sign in again, then retry.';
+  if (c.includes('user-disabled')) return 'This login has been turned off.';
+  console.error(e);
+  // Our own plain-language messages are fine to show; technical ones are not.
+  const m = String(e?.message || '');
+  return m && !/firebase|firestore|auth\/|http|error \(|undefined|null|exception|[{}<>]/i.test(m) && m.length < 140 ? m : 'Something went wrong. Please try again.';
 }
 
 // Highlights the sticky top bar once the page scrolls.

@@ -81,7 +81,7 @@ let failHandler = () => {};
 export const onSaveError = fn => { failHandler = fn; };
 function saveFailed(e, store) {
   console.error('save failed', store, e);
-  failHandler(e?.code === 'permission-denied' ? 'You don\'t have permission to change this.' : 'Could not save: ' + (e?.message || e));
+  failHandler(e?.code === 'permission-denied' ? 'You don\'t have permission to change this.' : 'This change could not be saved. Please try again.');
 }
 
 // ---------- settings (one record) ----------

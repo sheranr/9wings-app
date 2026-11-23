@@ -157,7 +157,7 @@ export async function dataView() {
   <div class="page narrow">
     <div class="page-head"><h2>Data &amp; backup</h2></div>
     <div class="notice-bar ${D.mode === 'firebase' ? 'lav' : ''}">${icon(D.mode === 'firebase' ? 'cloud' : 'phoneDevice')}<div class="grow small">${D.mode === 'firebase'
-      ? `<b>Online database</b> (Firebase · ${esc(D.getAdapter().projectId || '')}). Works offline and syncs automatically when you're online. Everyone in the team sees the same data.${navigator.onLine ? '' : '<br><span class="neg">You\'re offline — changes will sync when you reconnect.</span>'}`
+      ? `<b>Secure online database.</b> Works offline and syncs automatically when you're online. Everyone in the team sees the same data.${navigator.onLine ? '' : '<br><span class="neg">You\'re offline — changes will sync when you reconnect.</span>'}`
       : '<b>Saved on this device only.</b> Connect the online database to share data between devices and staff.'}</div></div>
     ${eyebrow('Records')}
     <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${counts.map(([k, n]) => `<div class="kpi"><span>${names[k]}</span><b>${n}</b></div>`).join('')}</div>
@@ -205,7 +205,7 @@ export async function dataView() {
       if (data.app !== '9wings') throw new Error('This is not a 9Wings backup file.');
       if (!(await confirmBox('Restore this backup? Records that are newer in the app are kept.', { ok: 'Restore', danger: false, title: 'Restore backup' }))) return;
       toast(`Restored ${D.importAll(data)} records ✓`, 4000);
-    } catch (err) { toast('Could not restore: ' + err.message, 5000); }
+    } catch (err) { toast(err.message === 'This is not a 9Wings backup file.' ? err.message : 'This file could not be read. Choose a 9Wings backup file (.json).', 5000); }
   };
   const lg = $('#legacy'); if (lg) lg.onclick = e => busy(e.currentTarget, async () => {
     const legacy = await D.readLegacy();

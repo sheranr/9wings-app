@@ -126,7 +126,7 @@ export async function buildReportPdf(r) {
   const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
   const col = a => rgb(a[0] / 255, a[1] / 255, a[2] / 255);
   const doc = await PDFDocument.create();
-  doc.setTitle(`${S.settings.businessName} report — ${r.label}`); doc.setAuthor(clean(S.settings.businessName));
+  doc.setTitle(`${S.settings.businessName} report — ${r.label}`); doc.setAuthor(clean(S.settings.businessName)); doc.setCreator(clean(S.settings.businessName)); doc.setProducer(clean(S.settings.businessName));
   const F = { reg: await doc.embedFont(StandardFonts.Helvetica), bold: await doc.embedFont(StandardFonts.HelveticaBold), serif: await doc.embedFont(StandardFonts.TimesRoman), serifB: await doc.embedFont(StandardFonts.TimesRomanBold) };
   const logo = await doc.embedPng(await fetch('img/logo-pdf.png').then(x => x.arrayBuffer()));
   const W = 595.28, H = 841.89, X0 = 48, X1 = W - 48, CW = X1 - X0, BOTTOM = 64;

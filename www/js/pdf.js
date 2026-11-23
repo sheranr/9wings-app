@@ -25,7 +25,9 @@ export async function buildInvoicePdf(inv, customer, ev, settingsNow, { due } = 
   const doc = await PDFDocument.create();
   doc.setTitle(`${quote ? 'Quotation' : 'Invoice'} ${inv.number || ''}`);
   doc.setAuthor(clean(settings.businessName));
-  doc.setCreator('9Wings app');
+  doc.setCreator(clean(settings.businessName));
+  doc.setProducer(clean(settings.businessName));
+  doc.setSubject(`${quote ? 'Quotation' : 'Invoice'} ${inv.number || ''}`);
   const F = {
     reg: await doc.embedFont(StandardFonts.Helvetica), bold: await doc.embedFont(StandardFonts.HelveticaBold),
     serif: await doc.embedFont(StandardFonts.TimesRoman), serifB: await doc.embedFont(StandardFonts.TimesRomanBold)

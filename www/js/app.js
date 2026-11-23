@@ -104,7 +104,7 @@ export async function route() {
     current = { hash: h, live, section };
     window.scrollTo(0, 0);
     try { await fn(...m.slice(1).map(x => x && decodeURIComponent(x))); }
-    catch (e) { console.error(e); $('#main').innerHTML = `<div class="page"><div class="empty"><h3>Something went wrong</h3><p>${esc(e.message)}</p><a class="btn" href="#/home">Go home</a></div></div>`; }
+    catch (e) { console.error(e); $('#main').innerHTML = `<div class="page"><div class="empty"><h3>Something went wrong</h3><p>This page couldn't be opened. Please go back and try again.</p><a class="btn" href="#/home">Go home</a></div></div>`; }
     bindBack();
     if (U.state.forced && U.state.latest) updatesUI.showUpdate(U.state.latest, true);
     return;
@@ -188,7 +188,7 @@ function lockDown() {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self' https://*.googleapis.com https://api.github.com https://raw.githubusercontent.com",
+    "connect-src 'self' https://*.googleapis.com https://sheranr.github.io https://api.github.com https://raw.githubusercontent.com",
     "frame-src https://*.firebaseapp.com",
     "object-src blob:",
     "base-uri 'self'",
@@ -206,10 +206,10 @@ async function start() {
   window.addEventListener('hashchange', route);
   N.onNotificationTap(extra => { if (extra.route) go(extra.route); });
   D.getAdapter().onAuth(user => {
-    if (user) signedIn(user).catch(e => { console.error(e); toast(e.message, 6000); });
+    if (user) signedIn(user).catch(e => { console.error(e); toast('Could not open your business data. Check your internet connection and try again.', 6000); });
     else { session.me = null; session.user = null; opened = ''; D.closeBusiness(); authView(); }
   });
   if ('serviceWorker' in navigator && !N.isNative() && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   navigator.storage?.persist?.().catch(() => {});
 }
-start().catch(e => { console.error(e); document.body.innerHTML = `<div class="boot"><p>Something went wrong: ${esc(e.message)}</p></div>`; });
+start().catch(e => { console.error(e); document.body.innerHTML = `<div class="boot"><p>The app couldn't start. Please close it and open it again.</p></div>`; });

@@ -100,7 +100,8 @@ Everything works without internet. Changes are saved on the device and sync auto
 ## For the developer
 
 - **Messages & updates:** App Manager → https://sheranr.github.io/9wings-app/admin/ (needs a GitHub fine-grained token for `9wings-app` with Contents and Actions read & write).
-- **Every push to `main`** builds a new Android version (Releases) and updates the web app. The app shows users an **Update** notification.
+- **Every push to `main`** builds a new Android version and updates the web app. The app file is served from the website (`/download/9Wings.apk`, version details in `/download/latest.json`) and the app shows users an **Update** notification.
+- **What's new for users:** write plain-language notes in `whats-new.txt` in the same push (or in the App Manager when publishing). If it isn't changed, users see "Improvements and fixes." Never put technical details there — users see this text.
 - **Firebase library:** bundled in `www/vendor/firebase.js` so the app works offline. To update it: `npm install firebase esbuild && npx esbuild tools/firebase-entry.js --bundle --format=esm --minify --outfile=www/vendor/firebase.js`.
 - **Before Firebase is connected** (`firebase-config.js` is `null`) the app stores data on the device only; that data can be moved into Firebase later from the dashboard prompt.
 - Keep `9wings-release.jks` / `KEYSTORE_BASE64.txt` safe — without them updates can't install over the existing app.

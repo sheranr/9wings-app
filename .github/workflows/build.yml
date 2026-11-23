@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         with:
@@ -71,23 +73,34 @@ jobs:
           $BT/apksigner verify 9Wings-Event.apk
           rm release.jks
 
-      - name: Release notes
+      - name: Release notes (shown to users)
         env:
           NOTES: ${{ github.event.inputs.notes }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
+          # Notes come from the App Manager, or from whats-new.txt when it was changed in this update.
           if [ -n "$NOTES" ]; then printf '%s\n' "$NOTES" > notes.md
-          else printf '%s\n' "$COMMIT_MSG" | grep -viE '^(co-authored-by|claude-session):' | sed '/^$/N;/^\n$/D' > notes.md; fi
-          [ -s notes.md ] || echo "Improvements and fixes." > notes.md
+          elif git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -qx 'whats-new.txt'; then cp whats-new.txt notes.md
+          else echo "Improvements and fixes." > notes.md; fi
           cat notes.md
 
       - name: Publish download
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: 9Wings Event 1.0.${{ github.run_number }}
+          name: 9Wings 1.0.${{ github.run_number }}
           body_path: notes.md
           make_latest: true
+          files: 9Wings-Event.apk
+
+      - name: Keep the app file for the website
+        run: |
+          mkdir -p site && cp 9Wings-Event.apk site/9Wings.apk && cp notes.md site/notes.md
+          echo "1.0.${{ github.run_number }}" > site/version.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-file
+          path: site
+          retention-days: 3
 
       - name: Make this version required
         if: ${{ github.event.inputs.required == 'true' }}
@@ -103,12 +116,23 @@ jobs:
             git push -q origin HEAD:main && break
             sleep 5
           done
-          files: 9Wings-Event.apk
 
   web:
+    needs: android
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The Android app is served from the website itself (…/download/9Wings.apk), with its version details.
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-file
+          path: site
+      - name: Add the app file and version details
+        run: |
+          cp site/9Wings.apk www/download/9Wings.apk
+          jq -n --arg v "$(cat site/version.txt)" --rawfile notes site/notes.md --arg date "$(date -u +%FT%TZ)" --argjson size "$(stat -c%s site/9Wings.apk)" \
+            '{version:$v, notes:($notes|rtrimstr("\n")), date:$date, size:$size, url:"https://sheranr.github.io/9wings-app/download/9Wings.apk"}' > www/download/latest.json
+          cat www/download/latest.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22

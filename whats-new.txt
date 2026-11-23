@@ -1,0 +1,3 @@
+• The app download works again — install and update straight from the 9Wings download page.
+• "View PDF" on phones saves a properly named invoice file.
+• Clearer messages if something goes wrong.
